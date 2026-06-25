@@ -1,10 +1,100 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/dal";
 import type { CandidateStage } from "@/lib/types";
 import { STAGES } from "@/lib/types";
+
+export type CandidateFormState = { ok: true } | { error: string } | undefined;
+
+export async function createCandidate(
+  _prev: CandidateFormState,
+  formData: FormData,
+): Promise<CandidateFormState> {
+  const me = await getProfile();
+  if (!me) return { error: "Not authenticated." };
+
+  const full_name = String(formData.get("full_name") ?? "").trim();
+  const job_id = String(formData.get("job_id") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim() || null;
+  const linkedin_url = String(formData.get("linkedin_url") ?? "").trim() || null;
+  const resume_text = String(formData.get("resume_text") ?? "").trim() || null;
+  const stage = (String(formData.get("stage") ?? "applied") as CandidateStage);
+
+  if (!full_name) return { error: "Candidate name is required." };
+  if (!job_id) return { error: "Please choose a job." };
+  if (!STAGES.includes(stage)) return { error: "Invalid stage." };
+
+  const supabase = await createClient();
+
+  // Candidate ownership follows the job's owner — this is how an admin adds
+  // candidates on a customer's behalf without a separate owner picker.
+  const { data: job, error: jobErr } = await supabase
+    .from("jobs")
+    .select("owner_id")
+    .eq("id", job_id)
+    .single();
+  if (jobErr || !job) return { error: "Job not found or not accessible." };
+
+  const { error } = await supabase.from("candidates").insert({
+    owner_id: job.owner_id,
+    job_id,
+    full_name,
+    email,
+    linkedin_url,
+    resume_text,
+    stage,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  redirect("/");
+}
+
+export async function updateCandidate(
+  _prev: CandidateFormState,
+  formData: FormData,
+): Promise<CandidateFormState> {
+  const me = await getProfile();
+  if (!me) return { error: "Not authenticated." };
+
+  const id = String(formData.get("id") ?? "").trim();
+  if (!id) return { error: "Missing candidate id." };
+
+  const full_name = String(formData.get("full_name") ?? "").trim();
+  const stage = String(formData.get("stage") ?? "applied") as CandidateStage;
+  if (!full_name) return { error: "Candidate name is required." };
+  if (!STAGES.includes(stage)) return { error: "Invalid stage." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("candidates")
+    .update({
+      full_name,
+      email: String(formData.get("email") ?? "").trim() || null,
+      linkedin_url: String(formData.get("linkedin_url") ?? "").trim() || null,
+      notes: String(formData.get("notes") ?? "").trim() || null,
+      resume_text: String(formData.get("resume_text") ?? "").trim() || null,
+      stage,
+    })
+    .eq("id", id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/");
+  revalidatePath(`/candidates/${id}`);
+  return { ok: true };
+}
+
+export async function deleteCandidate(id: string): Promise<void> {
+  const me = await getProfile();
+  if (!me) return;
+  const supabase = await createClient();
+  await supabase.from("candidates").delete().eq("id", id);
+  revalidatePath("/");
+  redirect("/");
+}
 
 export async function moveCandidateStage(
   candidateId: string,

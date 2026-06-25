@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   DndContext,
   DragOverlay,
@@ -135,6 +136,7 @@ export default function Board({
 
       {/* Board */}
       <DndContext
+        id="kanban-board"
         sensors={sensors}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
@@ -244,9 +246,14 @@ function CardShell({
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="text-sm font-medium leading-tight">
+        <Link
+          href={`/candidates/${candidate.id}`}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+          className="text-sm font-medium leading-tight hover:text-accent hover:underline"
+        >
           {candidate.full_name}
-        </span>
+        </Link>
         {candidate.linkedin_url && (
           <a
             href={candidate.linkedin_url}
