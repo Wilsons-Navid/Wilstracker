@@ -1,4 +1,4 @@
-# Mini ATS — Coding Test Plan
+# WilsTracker (Mini ATS) — Coding Test Plan
 
 **Owner:** Wilsons (w.wadotiwa@alustudent.com)
 **Date started:** 2026-06-25 · **Deadline:** ~2026-07-02 (1 week)

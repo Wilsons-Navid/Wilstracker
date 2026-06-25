@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini ATS",
+  title: "WilsTracker",
   description: "Applicant tracking, simplified.",
 };
 

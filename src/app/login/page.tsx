@@ -6,9 +6,9 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-lg font-bold text-accent-fg">
-            A
+            W
           </div>
-          <h1 className="text-xl font-semibold">Mini ATS</h1>
+          <h1 className="text-xl font-semibold">WilsTracker</h1>
           <p className="mt-1 text-sm text-muted">Sign in to your workspace</p>
         </div>
 

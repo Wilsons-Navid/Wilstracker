@@ -1,4 +1,4 @@
-# Setup — Mini ATS
+# Setup — WilsTracker
 
 Step-by-step to get the app running locally. Do these in order.
 

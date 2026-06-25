@@ -1,6 +1,6 @@
-# Mini ATS
+# WilsTracker
 
-A lightweight Applicant Tracking System: admins create accounts, customers post jobs,
+A lightweight Applicant Tracking System (ATS): admins create accounts, customers post jobs,
 add candidates, and manage them on a drag-and-drop Kanban board. Includes an AI-assisted
 CV assessment that scores a candidate against a job.
 

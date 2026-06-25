@@ -16,9 +16,9 @@ export default async function AppLayout({
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
-              A
+              W
             </span>
-            Mini ATS
+            WilsTracker
           </Link>
 
           <nav className="flex items-center gap-1 text-sm">

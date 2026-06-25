@@ -1,5 +1,5 @@
 -- ============================================================================
--- Mini ATS — database schema, RLS, and triggers
+-- WilsTracker — database schema, RLS, and triggers
 -- Run this in the Supabase SQL Editor (Dashboard > SQL Editor > New query).
 -- Safe to re-run: drops are guarded with "if exists".
 -- ============================================================================
