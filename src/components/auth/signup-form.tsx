@@ -6,7 +6,7 @@ import { signUpCandidate, type SignUpState } from "@/app/actions/auth";
 const inputCls =
   "w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20";
 
-export default function SignUpForm() {
+export default function SignUpForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState<SignUpState, FormData>(
     signUpCandidate,
     undefined,
@@ -25,6 +25,7 @@ export default function SignUpForm() {
       action={action}
       className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
     >
+      {next && <input type="hidden" name="next" value={next} />}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="full_name" className="text-sm font-medium">
           Full name

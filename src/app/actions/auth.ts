@@ -6,6 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error: string } | undefined;
 
+// Only allow redirecting to a path on this site. Reject absolute URLs and
+// protocol-relative paths ("//evil.com") so `next` can't become an open redirect.
+function safeNext(value: FormDataEntryValue | null): string | null {
+  const next = typeof value === "string" ? value : "";
+  if (next.startsWith("/") && !next.startsWith("//")) return next;
+  return null;
+}
+
 export async function signIn(
   _prev: AuthState,
   formData: FormData,
@@ -38,7 +46,11 @@ export async function signIn(
     };
   }
 
-  // Route by role: candidates land in their portal, staff on the board.
+  // Honor an explicit return path (e.g. an applicant sent to sign in from a job),
+  // otherwise route by role: candidates to their portal, staff to the board.
+  const next = safeNext(formData.get("next"));
+  if (next) redirect(next);
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -47,7 +59,9 @@ export async function signIn(
     .select("role")
     .eq("id", user?.id ?? "")
     .single();
-  redirect((profile as { role: string } | null)?.role === "candidate" ? "/portal" : "/");
+  redirect(
+    (profile as { role: string } | null)?.role === "candidate" ? "/portal" : "/board",
+  );
 }
 
 export type SignUpState = { ok: true } | { error: string } | undefined;
@@ -87,7 +101,11 @@ export async function signUpCandidate(
 
   // If the project requires email confirmation there is no session yet.
   if (!data.session) return { ok: true };
-  redirect("/portal");
+
+  // Account is active — send them back where they came from (e.g. the job they
+  // were trying to apply to) or to their portal.
+  const next = safeNext(formData.get("next"));
+  redirect(next ?? "/portal");
 }
 
 export async function signOut(): Promise<void> {
