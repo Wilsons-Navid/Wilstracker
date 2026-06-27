@@ -54,6 +54,7 @@ export interface Candidate {
   full_name: string;
   email: string | null;
   linkedin_url: string | null;
+  avatar_url: string | null;
   resume_url: string | null;
   resume_text: string | null;
   stage: CandidateStage;

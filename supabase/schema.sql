@@ -40,6 +40,7 @@ create table if not exists public.candidates (
   full_name    text not null,
   email        text,
   linkedin_url text,
+  avatar_url   text,
   resume_url   text,
   resume_text  text,
   stage        public.candidate_stage not null default 'applied',
