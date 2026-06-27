@@ -1,13 +1,15 @@
 # WilsTracker
 
-![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![Supabase](https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
-![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
-![Anthropic Claude](https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white)
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/Supabase-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white" alt="Supabase" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
+  <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white" alt="Anthropic Claude" />
+</p>
 
 WilsTracker is a lightweight applicant tracking system (ATS). Admins create
 accounts, customers post jobs and manage their hiring pipeline on a drag-and-drop
@@ -56,15 +58,15 @@ apply to roles and follow their own applications.
 
 ### The original brief
 
-These are the user stories the project started from:
+Where the project started:
 
-- As an admin, I can create accounts (both admin accounts and customer accounts).
-- As a customer, I can log in.
-- As a customer, I can post jobs I'm recruiting for.
-- As a customer, I can add candidates with their profile information (for example, a LinkedIn link).
-- As a customer, I can see a compact Kanban view with all candidates associated with my jobs.
-- As a customer, I can filter the Kanban view by job and candidate name.
-- As an admin, I can do everything a customer can do on their behalf.
+- Admins provision every staff login, both recruiter and admin accounts. There is no public sign-up for staff.
+- Recruiters sign in to their own workspace.
+- They post the roles they are hiring for.
+- They add candidates by hand and capture the essentials, such as a name, an email, and a LinkedIn link.
+- Each recruiter's candidates land on one compact Kanban board, grouped by stage across all of that recruiter's jobs.
+- The board narrows by job and by candidate name when the pipeline gets busy.
+- Admins can do all of this for any recruiter, through the same screens rather than a separate path.
 
 ### The candidate experience
 
