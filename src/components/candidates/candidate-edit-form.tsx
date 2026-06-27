@@ -8,6 +8,7 @@ import {
 import {
   STAGES,
   STAGE_LABELS,
+  type Application,
   type Candidate,
 } from "@/lib/types";
 
@@ -16,8 +17,10 @@ const inputCls =
 
 export default function CandidateEditForm({
   candidate,
+  application,
 }: {
   candidate: Candidate;
+  application: Application;
 }) {
   const [state, action, pending] = useActionState<CandidateFormState, FormData>(
     updateCandidate,
@@ -29,7 +32,8 @@ export default function CandidateEditForm({
       action={action}
       className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
     >
-      <input type="hidden" name="id" value={candidate.id} />
+      <input type="hidden" name="candidate_id" value={candidate.id} />
+      <input type="hidden" name="application_id" value={application.id} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
@@ -51,7 +55,7 @@ export default function CandidateEditForm({
           <select
             id="stage"
             name="stage"
-            defaultValue={candidate.stage}
+            defaultValue={application.stage}
             className={inputCls}
           >
             {STAGES.map((s) => (
@@ -98,7 +102,7 @@ export default function CandidateEditForm({
           id="notes"
           name="notes"
           rows={3}
-          defaultValue={candidate.notes ?? ""}
+          defaultValue={application.notes ?? ""}
           className={inputCls}
         />
       </div>

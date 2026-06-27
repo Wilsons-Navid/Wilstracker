@@ -8,7 +8,7 @@ import ResumeUpload from "@/components/candidates/resume-upload";
 import AvatarUpload from "@/components/candidates/avatar-upload";
 import Avatar from "@/components/ui/avatar";
 import { getResumeSignedUrl } from "@/app/actions/resume";
-import type { Candidate, CvAssessment, Job } from "@/lib/types";
+import type { Application, Candidate, CvAssessment, Job } from "@/lib/types";
 
 export default async function CandidateDetailPage({
   params,
@@ -18,31 +18,27 @@ export default async function CandidateDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: candidate } = await supabase
-    .from("candidates")
-    .select("*")
+  // [id] is the application id. Load it with its candidate (the person) and job.
+  const { data: application } = await supabase
+    .from("applications")
+    .select("*, candidate:candidates(*), job:jobs(*)")
     .eq("id", id)
     .single();
 
-  if (!candidate) notFound();
-  const c = candidate as Candidate;
+  if (!application) notFound();
+  const app = application as Application & { candidate: Candidate; job: Job | null };
+  const c = app.candidate;
+  const job = app.job;
 
-  const resumeSignedUrl = c.resume_url
-    ? await getResumeSignedUrl(c.id)
-    : null;
+  const resumeSignedUrl = c.resume_url ? await getResumeSignedUrl(c.id) : null;
 
-  const [{ data: job }, { data: assessment }] = await Promise.all([
-    c.job_id
-      ? supabase.from("jobs").select("*").eq("id", c.job_id).single()
-      : Promise.resolve({ data: null }),
-    supabase
-      .from("cv_assessments")
-      .select("*")
-      .eq("candidate_id", id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
+  const { data: assessment } = await supabase
+    .from("cv_assessments")
+    .select("*")
+    .eq("application_id", id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -56,7 +52,7 @@ export default async function CandidateDetailPage({
             <div>
               <h1 className="text-xl font-semibold">{c.full_name}</h1>
               <p className="text-sm text-muted">
-                {(job as Job | null)?.title ?? "No job"}
+                {job?.title ?? "No job"}
                 {c.linkedin_url && (
                   <>
                     {" · "}
@@ -74,7 +70,7 @@ export default async function CandidateDetailPage({
             </div>
           </div>
         </div>
-        <form action={deleteCandidate.bind(null, c.id)}>
+        <form action={deleteCandidate.bind(null, app.id)}>
           <button className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-red-50 hover:text-red-600">
             Delete
           </button>
@@ -83,7 +79,7 @@ export default async function CandidateDetailPage({
 
       <div className="flex flex-col gap-6">
         <AssessmentPanel
-          candidateId={c.id}
+          applicationId={app.id}
           hasResume={!!c.resume_text?.trim() || !!c.resume_url}
           latest={(assessment as CvAssessment | null) ?? null}
         />
@@ -97,7 +93,7 @@ export default async function CandidateDetailPage({
           hasFile={!!c.resume_url}
           signedUrl={resumeSignedUrl}
         />
-        <CandidateEditForm candidate={c} />
+        <CandidateEditForm candidate={c} application={app} />
       </div>
     </div>
   );

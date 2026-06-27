@@ -42,11 +42,11 @@ function RubricBar({
 }
 
 export default function AssessmentPanel({
-  candidateId,
+  applicationId,
   hasResume,
   latest,
 }: {
-  candidateId: string;
+  applicationId: string;
   hasResume: boolean;
   latest: CvAssessment | null;
 }) {
@@ -67,7 +67,7 @@ export default function AssessmentPanel({
   function run() {
     setError(null);
     startTransition(async () => {
-      const res = await assessCandidate(candidateId);
+      const res = await assessCandidate(applicationId);
       if ("error" in res) setError(res.error);
       else router.refresh();
     });

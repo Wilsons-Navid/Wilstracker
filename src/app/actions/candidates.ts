@@ -27,7 +27,7 @@ export async function createCandidate(
   const email = String(formData.get("email") ?? "").trim() || null;
   const linkedin_url = String(formData.get("linkedin_url") ?? "").trim() || null;
   const resume_text = String(formData.get("resume_text") ?? "").trim() || null;
-  const stage = (String(formData.get("stage") ?? "applied") as CandidateStage);
+  const stage = String(formData.get("stage") ?? "applied") as CandidateStage;
 
   if (!full_name) return { error: "Candidate name is required." };
   if (!job_id) return { error: "Please choose a job." };
@@ -52,7 +52,7 @@ export async function createCandidate(
 
   const supabase = await createClient();
 
-  // Candidate ownership follows the job's owner — this is how an admin adds
+  // The application's owner follows the job's owner — this is how an admin adds
   // candidates on a customer's behalf without a separate owner picker.
   const { data: job, error: jobErr } = await supabase
     .from("jobs")
@@ -61,17 +61,10 @@ export async function createCandidate(
     .single();
   if (jobErr || !job) return { error: "Job not found or not accessible." };
 
+  // 1. The person.
   const { data: created, error } = await supabase
     .from("candidates")
-    .insert({
-      owner_id: job.owner_id,
-      job_id,
-      full_name,
-      email,
-      linkedin_url,
-      resume_text,
-      stage,
-    })
+    .insert({ full_name, email, linkedin_url, resume_text })
     .select("id")
     .single();
   if (error || !created) {
@@ -79,9 +72,7 @@ export async function createCandidate(
   }
   const candidateId = (created as { id: string }).id;
 
-  // Files are keyed by candidate ID, so they upload after the row exists.
-  // A rare upload failure won't block creation — the file can be added later
-  // from the candidate page.
+  // 2. Files are keyed by candidate ID, so they upload after the row exists.
   const updates: { avatar_url?: string; resume_url?: string } = {};
   if (avatarFile) {
     const r = await uploadAvatarFile(candidateId, avatarFile);
@@ -95,6 +86,16 @@ export async function createCandidate(
     await supabase.from("candidates").update(updates).eq("id", candidateId);
   }
 
+  // 3. The pipeline entry that lands on the board.
+  const { error: appErr } = await supabase.from("applications").insert({
+    candidate_id: candidateId,
+    job_id,
+    owner_id: (job as { owner_id: string }).owner_id,
+    stage,
+    source: "recruiter",
+  });
+  if (appErr) return { error: appErr.message };
+
   revalidatePath("/");
   redirect("/");
 }
@@ -106,8 +107,9 @@ export async function updateCandidate(
   const me = await getProfile();
   if (!me) return { error: "Not authenticated." };
 
-  const id = String(formData.get("id") ?? "").trim();
-  if (!id) return { error: "Missing candidate id." };
+  const applicationId = String(formData.get("application_id") ?? "").trim();
+  const candidateId = String(formData.get("candidate_id") ?? "").trim();
+  if (!applicationId || !candidateId) return { error: "Missing identifiers." };
 
   const full_name = String(formData.get("full_name") ?? "").trim();
   const stage = String(formData.get("stage") ?? "applied") as CandidateStage;
@@ -115,35 +117,72 @@ export async function updateCandidate(
   if (!STAGES.includes(stage)) return { error: "Invalid stage." };
 
   const supabase = await createClient();
-  const { error } = await supabase
+
+  // Person fields live on the candidate.
+  const { error: cErr } = await supabase
     .from("candidates")
     .update({
       full_name,
       email: String(formData.get("email") ?? "").trim() || null,
       linkedin_url: String(formData.get("linkedin_url") ?? "").trim() || null,
-      notes: String(formData.get("notes") ?? "").trim() || null,
       resume_text: String(formData.get("resume_text") ?? "").trim() || null,
-      stage,
     })
-    .eq("id", id);
-  if (error) return { error: error.message };
+    .eq("id", candidateId);
+  if (cErr) return { error: cErr.message };
+
+  // Pipeline fields live on the application.
+  const { error: aErr } = await supabase
+    .from("applications")
+    .update({ stage, notes: String(formData.get("notes") ?? "").trim() || null })
+    .eq("id", applicationId);
+  if (aErr) return { error: aErr.message };
 
   revalidatePath("/");
-  revalidatePath(`/candidates/${id}`);
+  revalidatePath(`/candidates/${applicationId}`);
   return { ok: true };
 }
 
-export async function deleteCandidate(id: string): Promise<void> {
+export async function deleteCandidate(applicationId: string): Promise<void> {
   const me = await getProfile();
   if (!me) return;
   const supabase = await createClient();
-  await supabase.from("candidates").delete().eq("id", id);
+
+  // Load the application's candidate so we can decide whether to remove the
+  // person too. Keep the person if they have an account or other applications.
+  const { data: app } = await supabase
+    .from("applications")
+    .select("candidate_id")
+    .eq("id", applicationId)
+    .single();
+
+  if (app) {
+    const candidateId = (app as { candidate_id: string }).candidate_id;
+    const { data: cand } = await supabase
+      .from("candidates")
+      .select("auth_user_id")
+      .eq("id", candidateId)
+      .single();
+    const { count } = await supabase
+      .from("applications")
+      .select("id", { count: "exact", head: true })
+      .eq("candidate_id", candidateId);
+
+    const hasAccount = !!(cand as { auth_user_id: string | null } | null)
+      ?.auth_user_id;
+    if (!hasAccount && (count ?? 0) <= 1) {
+      // Recruiter-created, single application: remove the person (cascades the app).
+      await supabase.from("candidates").delete().eq("id", candidateId);
+    } else {
+      await supabase.from("applications").delete().eq("id", applicationId);
+    }
+  }
+
   revalidatePath("/");
   redirect("/");
 }
 
 export async function moveCandidateStage(
-  candidateId: string,
+  applicationId: string,
   stage: CandidateStage,
 ): Promise<{ error?: string }> {
   // Auth check — Server Actions are public endpoints.
@@ -152,11 +191,12 @@ export async function moveCandidateStage(
   if (!STAGES.includes(stage)) return { error: "Invalid stage." };
 
   const supabase = await createClient();
-  // RLS guarantees a customer can only move their own candidates.
+  // RLS guarantees a customer can only move applications they own.
+  // The stage_history row is written by a database trigger.
   const { error } = await supabase
-    .from("candidates")
+    .from("applications")
     .update({ stage })
-    .eq("id", candidateId);
+    .eq("id", applicationId);
 
   if (error) return { error: error.message };
 

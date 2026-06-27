@@ -27,20 +27,29 @@ async function extractDocxText(path: string): Promise<string | null> {
 }
 
 export async function assessCandidate(
-  candidateId: string,
+  applicationId: string,
 ): Promise<AssessResult> {
   const me = await getProfile();
   if (!me) return { error: "Not authenticated." };
 
   const supabase = await createClient();
 
-  // RLS ensures the user can only read their own candidate (admins: any).
-  const { data: candidate, error: cErr } = await supabase
-    .from("candidates")
-    .select("id, full_name, resume_text, resume_url, job_id")
-    .eq("id", candidateId)
+  // RLS ensures the user can only read applications they own (admins: any).
+  const { data: app, error: aErr } = await supabase
+    .from("applications")
+    .select(
+      "id, job_id, candidate:candidates(full_name, resume_text, resume_url)",
+    )
+    .eq("id", applicationId)
     .single();
-  if (cErr || !candidate) return { error: "Candidate not found." };
+  if (aErr || !app) return { error: "Application not found." };
+
+  const candidate = app.candidate as unknown as {
+    full_name: string;
+    resume_text: string | null;
+    resume_url: string | null;
+  };
+  const jobId = app.job_id as string | null;
 
   const hasText = !!candidate.resume_text?.trim();
   const isPdf = /\.pdf$/i.test(candidate.resume_url ?? "");
@@ -50,7 +59,7 @@ export async function assessCandidate(
     };
   }
   // A score is only meaningful against a specific role — require the job.
-  if (!candidate.job_id) {
+  if (!jobId) {
     return {
       error:
         "Attach a job to this candidate first — the assessment scores the CV against a specific role.",
@@ -60,7 +69,7 @@ export async function assessCandidate(
   const { data: job } = await supabase
     .from("jobs")
     .select("title, description, location")
-    .eq("id", candidate.job_id)
+    .eq("id", jobId)
     .single();
   if (!job) {
     return {
@@ -227,8 +236,7 @@ Candidate name: ${candidate.full_name}`;
   );
 
   const { error: insErr } = await supabase.from("cv_assessments").insert({
-    candidate_id: candidate.id,
-    job_id: candidate.job_id,
+    application_id: app.id,
     score,
     summary: input.summary,
     strengths: input.strengths,
@@ -238,6 +246,6 @@ Candidate name: ${candidate.full_name}`;
   });
   if (insErr) return { error: insErr.message };
 
-  revalidatePath(`/candidates/${candidateId}`);
+  revalidatePath(`/candidates/${applicationId}`);
   return { ok: true };
 }

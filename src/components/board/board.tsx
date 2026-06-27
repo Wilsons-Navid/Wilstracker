@@ -16,7 +16,7 @@ import {
 import {
   STAGES,
   STAGE_LABELS,
-  type Candidate,
+  type PipelineCard,
   type CandidateStage,
   type Job,
 } from "@/lib/types";
@@ -34,12 +34,12 @@ const STAGE_ACCENT: Record<CandidateStage, string> = {
 
 export default function Board({
   jobs,
-  candidates: initial,
+  cards: initial,
 }: {
   jobs: Job[];
-  candidates: Candidate[];
+  cards: PipelineCard[];
 }) {
-  const [candidates, setCandidates] = useState<Candidate[]>(initial);
+  const [candidates, setCandidates] = useState<PipelineCard[]>(initial);
   const [jobFilter, setJobFilter] = useState<string>("all");
   const [nameFilter, setNameFilter] = useState<string>("");
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -63,7 +63,7 @@ export default function Board({
   }, [candidates, jobFilter, nameFilter]);
 
   const byStage = useMemo(() => {
-    const map: Record<CandidateStage, Candidate[]> = {
+    const map: Record<CandidateStage, PipelineCard[]> = {
       applied: [],
       screening: [],
       interview: [],
@@ -213,7 +213,7 @@ function CandidateCard({
   candidate,
   jobTitle,
 }: {
-  candidate: Candidate;
+  candidate: PipelineCard;
   jobTitle?: string;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -236,7 +236,7 @@ function CardShell({
   jobTitle,
   dragging,
 }: {
-  candidate: Candidate;
+  candidate: PipelineCard;
   jobTitle?: string;
   dragging?: boolean;
 }) {

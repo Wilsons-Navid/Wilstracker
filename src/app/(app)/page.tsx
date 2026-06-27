@@ -2,9 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/dal";
 import Board from "@/components/board/board";
-import type { Candidate, Job } from "@/lib/types";
+import type { Job, PipelineCard } from "@/lib/types";
 
-// Cap how many candidate rows the board loads in one pass. The Kanban renders
+// Cap how many applications the board loads in one pass. The Kanban renders
 // every card client-side, so an unbounded fetch would not scale; this keeps the
 // payload bounded and we surface the total so nothing looks silently missing.
 const BOARD_LIMIT = 500;
@@ -14,17 +14,39 @@ export default async function BoardPage() {
   const supabase = await createClient();
 
   // RLS scopes these automatically: customers see their own rows; admins see all.
-  const [{ data: jobs }, { data: candidates, count }] = await Promise.all([
+  const [{ data: jobs }, { data: apps, count }] = await Promise.all([
     supabase.from("jobs").select("*").order("created_at", { ascending: true }),
     supabase
-      .from("candidates")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
+      .from("applications")
+      .select(
+        "id, stage, job_id, candidate:candidates(id, full_name, avatar_url, linkedin_url)",
+        { count: "exact" },
+      )
+      .order("applied_at", { ascending: false })
       .limit(BOARD_LIMIT),
   ]);
 
+  // Flatten each application + its candidate into a single board card.
+  const cards: PipelineCard[] = (apps ?? []).map((a) => {
+    const cand = a.candidate as unknown as {
+      id: string;
+      full_name: string;
+      avatar_url: string | null;
+      linkedin_url: string | null;
+    };
+    return {
+      id: a.id as string,
+      candidate_id: cand?.id,
+      full_name: cand?.full_name,
+      avatar_url: cand?.avatar_url ?? null,
+      linkedin_url: cand?.linkedin_url ?? null,
+      job_id: (a.job_id as string | null) ?? null,
+      stage: a.stage as PipelineCard["stage"],
+    };
+  });
+
   const total = count ?? 0;
-  const shown = candidates?.length ?? 0;
+  const shown = cards.length;
 
   return (
     <div className="flex h-full flex-col">
@@ -47,12 +69,12 @@ export default async function BoardPage() {
 
       {shown < total && (
         <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          Showing the {shown} most recent of {total} candidates. Use the job
+          Showing the {shown} most recent of {total} applications. Use the job
           filter to narrow results.
         </div>
       )}
 
-      <Board jobs={(jobs as Job[]) ?? []} candidates={(candidates as Candidate[]) ?? []} />
+      <Board jobs={(jobs as Job[]) ?? []} cards={cards} />
     </div>
   );
 }

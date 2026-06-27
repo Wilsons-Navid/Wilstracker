@@ -2,17 +2,17 @@ import { getProfile } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { deleteJob } from "@/app/actions/jobs";
 import CreateJobForm from "@/components/jobs/create-job-form";
-import type { Candidate, Job, Profile } from "@/lib/types";
+import type { Job, Profile } from "@/lib/types";
 
 export default async function JobsPage() {
   const me = await getProfile();
   const isAdmin = me?.role === "admin";
   const supabase = await createClient();
 
-  const [{ data: jobs }, { data: candidates }, { data: profiles }] =
+  const [{ data: jobs }, { data: applications }, { data: profiles }] =
     await Promise.all([
       supabase.from("jobs").select("*").order("created_at", { ascending: false }),
-      supabase.from("candidates").select("id, job_id"),
+      supabase.from("applications").select("id, job_id"),
       isAdmin
         ? supabase.from("profiles").select("id, full_name, role")
         : Promise.resolve({ data: [] as Profile[] }),
@@ -20,8 +20,8 @@ export default async function JobsPage() {
 
   const jobList = (jobs as Job[]) ?? [];
   const counts = new Map<string, number>();
-  for (const c of (candidates as Pick<Candidate, "id" | "job_id">[]) ?? []) {
-    if (c.job_id) counts.set(c.job_id, (counts.get(c.job_id) ?? 0) + 1);
+  for (const a of (applications as { id: string; job_id: string | null }[]) ?? []) {
+    if (a.job_id) counts.set(a.job_id, (counts.get(a.job_id) ?? 0) + 1);
   }
 
   const allProfiles = (profiles as Profile[]) ?? [];

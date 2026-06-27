@@ -49,28 +49,34 @@ export interface Job {
   created_at: string;
 }
 
-// The person. In the candidate-portal model the pipeline fields (owner_id,
-// job_id, stage, notes) move to Application; they remain here until the
-// Phase 2 refactor migrates the recruiter UI onto applications.
+// The person. Pipeline fields (owner_id, job_id, stage, notes) live on Application.
 export interface Candidate {
   id: string;
-  owner_id: string;
-  job_id: string | null;
-  auth_user_id?: string | null;
+  auth_user_id: string | null;
   full_name: string;
   email: string | null;
-  phone?: string | null;
+  phone: string | null;
   linkedin_url: string | null;
-  portfolio_url?: string | null;
-  location?: string | null;
-  headline?: string | null;
+  portfolio_url: string | null;
+  location: string | null;
+  headline: string | null;
   avatar_url: string | null;
   resume_url: string | null;
   resume_text: string | null;
-  stage: CandidateStage;
-  notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// Flattened board card: one application plus its candidate's display fields.
+// `id` is the application id (the drag/move target and detail-page key).
+export interface PipelineCard {
+  id: string;
+  candidate_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  linkedin_url: string | null;
+  job_id: string | null;
+  stage: CandidateStage;
 }
 
 // The pipeline entry: one candidate applying to one job.
@@ -97,13 +103,9 @@ export interface StageHistory {
   moved_at: string;
 }
 
-// candidate_id/job_id are the pre-migration keys; application_id is the target.
-// Both kept until the Phase 2 refactor moves queries onto application_id.
 export interface CvAssessment {
   id: string;
-  candidate_id: string;
-  job_id: string | null;
-  application_id?: string;
+  application_id: string;
   score: number | null;
   summary: string | null;
   strengths: string[] | null;
