@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import ApplyForm from "@/components/careers/apply-form";
+import { getProfile, getCandidate } from "@/lib/dal";
+import CandidateApplyForm from "@/components/careers/candidate-apply-form";
 import type { Job } from "@/lib/types";
 
 export default async function CareerJobPage({
@@ -19,6 +20,9 @@ export default async function CareerJobPage({
     .single();
   if (!data) notFound();
   const job = data as Job;
+
+  const profile = await getProfile();
+  const next = `/careers/${job.id}`;
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-16">
@@ -41,8 +45,68 @@ export default async function CareerJobPage({
 
       <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
         <h2 className="mb-4 text-base font-semibold">Apply for this role</h2>
-        <ApplyForm jobId={job.id} />
+        {await renderApplySection(job, profile, next)}
       </section>
     </main>
+  );
+}
+
+async function renderApplySection(
+  job: Job,
+  profile: { role: string } | null,
+  next: string,
+) {
+  // Signed-out visitor: send them to sign in / sign up, then back to this job.
+  if (!profile) {
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted">
+          Sign in or create an account to apply. It only takes a minute, and you
+          can track your application afterwards.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/login?next=${encodeURIComponent(next)}`}
+            className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90"
+          >
+            Sign in to apply
+          </Link>
+          <Link
+            href={`/signup?next=${encodeURIComponent(next)}`}
+            className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold transition hover:bg-background"
+          >
+            Create an account
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed-in staff don't apply to roles.
+  if (profile.role !== "candidate") {
+    return (
+      <p className="text-sm text-muted">
+        You&apos;re signed in as a staff account. Applications are submitted from
+        a candidate account.
+      </p>
+    );
+  }
+
+  const candidate = await getCandidate();
+  if (!candidate) {
+    return (
+      <p className="text-sm text-muted">
+        We couldn&apos;t load your candidate profile. Please sign out and back in.
+      </p>
+    );
+  }
+
+  return (
+    <CandidateApplyForm
+      jobId={job.id}
+      fullName={candidate.full_name}
+      email={candidate.email}
+      hasResume={!!candidate.resume_url}
+    />
   );
 }
