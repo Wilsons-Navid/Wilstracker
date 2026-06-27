@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export type AuthState = { error: string } | undefined;
@@ -63,13 +64,24 @@ export async function signUpCandidate(
   if (!email || !password) return { error: "Email and password are required." };
   if (password.length < 8) return { error: "Password must be at least 8 characters." };
 
+  // Build the confirmation-link target from the incoming request so it points at
+  // this deployment (localhost in dev, the live URL in prod) instead of whatever
+  // Supabase's Site URL happens to be.
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const origin = h.get("origin") ?? (host ? `${proto}://${host}` : "");
+
   const supabase = await createClient();
   // role=candidate in metadata drives the handle_new_user trigger, which creates
   // the profile and the linked candidate row.
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name, role: "candidate" } },
+    options: {
+      data: { full_name, role: "candidate" },
+      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
+    },
   });
   if (error) return { error: error.message };
 
