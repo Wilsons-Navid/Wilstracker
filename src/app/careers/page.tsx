@@ -19,7 +19,7 @@ export default async function CareersPage() {
   const jobs = (data as Job[]) ?? [];
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-16">
+    <main className="mx-auto max-w-5xl px-6 py-16">
       <header className="mb-10">
         <h1 className="text-2xl font-semibold">Open positions</h1>
         <p className="mt-1 text-sm text-muted">
@@ -32,12 +32,12 @@ export default async function CareersPage() {
           There are no open positions right now. Please check back soon.
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {jobs.map((job) => (
-            <li key={job.id}>
+            <li key={job.id} className="flex">
               <Link
                 href={`/careers/${job.id}`}
-                className="block rounded-xl border border-border bg-surface p-5 transition hover:border-accent"
+                className="flex w-full flex-col rounded-xl border border-border bg-surface p-5 transition hover:border-accent"
               >
                 <div className="font-medium">{job.title}</div>
                 <div className="mt-0.5 text-sm text-muted">
