@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/dal";
+import { sendStageChanged } from "@/lib/email";
 import type { CandidateStage } from "@/lib/types";
 import { STAGES } from "@/lib/types";
 import {
@@ -199,6 +200,29 @@ export async function moveCandidateStage(
     .eq("id", applicationId);
 
   if (error) return { error: error.message };
+
+  // Notify the candidate of the new stage. Best-effort: a failed or disabled
+  // email never affects the move.
+  const { data: app } = await supabase
+    .from("applications")
+    .select("candidate:candidates(full_name, email), job:jobs(title)")
+    .eq("id", applicationId)
+    .single();
+  if (app) {
+    const cand = app.candidate as unknown as {
+      full_name: string;
+      email: string | null;
+    } | null;
+    const job = app.job as unknown as { title: string } | null;
+    if (cand) {
+      await sendStageChanged(
+        cand.email,
+        cand.full_name,
+        job?.title ?? "your application",
+        stage,
+      );
+    }
+  }
 
   revalidatePath("/");
   return {};

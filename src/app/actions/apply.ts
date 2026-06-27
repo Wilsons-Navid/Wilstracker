@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateResumeFile, uploadResumeFile } from "@/lib/uploads";
+import { sendApplicationReceived } from "@/lib/email";
 
 export type ApplyState = { ok: true } | { error: string } | undefined;
 
@@ -39,13 +40,14 @@ export async function applyToJob(
   // The job must exist and still be open.
   const { data: job } = await admin
     .from("jobs")
-    .select("id, owner_id, status")
+    .select("id, owner_id, status, title")
     .eq("id", jobId)
     .single();
   if (!job || (job as { status: string }).status !== "open") {
     return { error: "This job is no longer accepting applications." };
   }
   const ownerId = (job as { owner_id: string }).owner_id;
+  const jobTitle = (job as { title: string }).title;
 
   // Find or create the person, de-duplicated by email.
   let candidateId: string;
@@ -99,6 +101,9 @@ export async function applyToJob(
     source: "website",
   });
   if (appErr) return { error: "Could not submit your application." };
+
+  // Best-effort confirmation; never blocks the application.
+  await sendApplicationReceived(email, full_name, jobTitle);
 
   return { ok: true };
 }
