@@ -123,6 +123,28 @@ returns boolean language sql stable security definer set search_path = public as
   );
 $$;
 
+-- Cross-table helpers for the candidate/application policies. Both must be
+-- SECURITY DEFINER so they bypass RLS: candidates_select needs to look at
+-- applications and applications_select needs to look at candidates, and a plain
+-- EXISTS would make each table's policy re-enter the other's, raising 42P17
+-- "infinite recursion detected in policy". Routing the cross-table check
+-- through a definer function breaks that cycle.
+create or replace function public.user_owns_candidate(cand uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.applications a
+    where a.candidate_id = cand and a.owner_id = auth.uid()
+  );
+$$;
+
+create or replace function public.is_my_application(cand uuid)
+returns boolean language sql stable security definer set search_path = public as $$
+  select exists (
+    select 1 from public.candidates c
+    where c.id = cand and c.auth_user_id = auth.uid()
+  );
+$$;
+
 -- ---------- Trigger: mirror new auth users into profiles (+ candidate row) --
 create or replace function public.handle_new_user()
 returns trigger language plpgsql security definer set search_path = public as $$
@@ -249,10 +271,7 @@ create policy candidates_select on public.candidates
   for select using (
     auth_user_id = auth.uid()
     or public.is_admin()
-    or exists (
-      select 1 from public.applications a
-      where a.candidate_id = candidates.id and a.owner_id = auth.uid()
-    )
+    or public.user_owns_candidate(id)
   );
 
 -- Staff create candidate persons (manual add). Self-registered candidate rows
@@ -268,27 +287,18 @@ create policy candidates_update on public.candidates
   for update using (
     auth_user_id = auth.uid()
     or public.is_admin()
-    or exists (
-      select 1 from public.applications a
-      where a.candidate_id = candidates.id and a.owner_id = auth.uid()
-    )
+    or public.user_owns_candidate(id)
   ) with check (
     auth_user_id = auth.uid()
     or public.is_admin()
-    or exists (
-      select 1 from public.applications a
-      where a.candidate_id = candidates.id and a.owner_id = auth.uid()
-    )
+    or public.user_owns_candidate(id)
   );
 
 drop policy if exists candidates_delete on public.candidates;
 create policy candidates_delete on public.candidates
   for delete using (
     public.is_admin()
-    or exists (
-      select 1 from public.applications a
-      where a.candidate_id = candidates.id and a.owner_id = auth.uid()
-    )
+    or public.user_owns_candidate(id)
   );
 
 -- ---------- applications ----------------------------------------------------
@@ -298,10 +308,7 @@ create policy applications_select on public.applications
   for select using (
     owner_id = auth.uid()
     or public.is_admin()
-    or exists (
-      select 1 from public.candidates c
-      where c.id = candidate_id and c.auth_user_id = auth.uid()
-    )
+    or public.is_my_application(candidate_id)
   );
 
 drop policy if exists applications_insert on public.applications;
