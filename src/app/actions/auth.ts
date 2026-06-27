@@ -20,7 +20,21 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Invalid email or password." };
+    // Distinguish a genuine bad-credentials response (HTTP 400 from GoTrue) from
+    // system/config failures (network, missing env, project down). Collapsing
+    // everything into "invalid password" previously hid a blank-env-var bug.
+    const status = (error as { status?: number }).status;
+    const isBadCredentials =
+      status === 400 || /invalid login credentials/i.test(error.message);
+
+    if (isBadCredentials) {
+      return { error: "Invalid email or password." };
+    }
+
+    console.error("[auth] signIn system error:", status, error.message);
+    return {
+      error: "Sign-in is temporarily unavailable. Please try again shortly.",
+    };
   }
 
   redirect("/");

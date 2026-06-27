@@ -21,6 +21,7 @@ import {
   type Job,
 } from "@/lib/types";
 import { moveCandidateStage } from "@/app/actions/candidates";
+import Avatar from "@/components/ui/avatar";
 
 const STAGE_ACCENT: Record<CandidateStage, string> = {
   applied: "bg-slate-400",
@@ -245,35 +246,44 @@ function CardShell({
         dragging ? "rotate-1 shadow-md" : ""
       }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          href={`/candidates/${candidate.id}`}
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-          className="text-sm font-medium leading-tight hover:text-accent hover:underline"
-        >
-          {candidate.full_name}
-        </Link>
-        {candidate.linkedin_url && (
-          <a
-            href={candidate.linkedin_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={(e) => e.stopPropagation()}
-            className="shrink-0 text-xs font-medium text-accent hover:underline"
-          >
-            in ↗
-          </a>
-        )}
-      </div>
-      {jobTitle && (
-        <div className="mt-1.5">
-          <span className="inline-block rounded bg-background px-1.5 py-0.5 text-xs text-muted">
-            {jobTitle}
-          </span>
+      <div className="flex items-start gap-2.5">
+        <Avatar
+          name={candidate.full_name}
+          photoUrl={candidate.avatar_url}
+          size="sm"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <Link
+              href={`/candidates/${candidate.id}`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
+              className="text-sm font-medium leading-tight hover:text-accent hover:underline"
+            >
+              {candidate.full_name}
+            </Link>
+            {candidate.linkedin_url && (
+              <a
+                href={candidate.linkedin_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0 text-xs font-medium text-accent hover:underline"
+              >
+                in ↗
+              </a>
+            )}
+          </div>
+          {jobTitle && (
+            <div className="mt-1.5">
+              <span className="inline-block rounded bg-background px-1.5 py-0.5 text-xs text-muted">
+                {jobTitle}
+              </span>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
