@@ -6,6 +6,16 @@ import { sendApplicationReceived } from "@/lib/email";
 
 export type ApplyState = { ok: true } | { error: string } | undefined;
 
+// This is an unauthenticated, service-role endpoint, so every input is hostile
+// until proven otherwise. Cap field lengths to keep storage bounded and reject
+// malformed contact details before anything touches the database.
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const MAX = { name: 120, email: 200, phone: 40, url: 300, cover: 5000 };
+
+function tooLong(v: string | null, max: number): boolean {
+  return !!v && v.length > max;
+}
+
 /**
  * Public job application. The applicant has no session, so this runs entirely
  * through the service-role client (RLS would block an anonymous insert). It
@@ -26,6 +36,16 @@ export async function applyToJob(
   if (!jobId) return { error: "Missing job." };
   if (!full_name) return { error: "Your name is required." };
   if (!email) return { error: "Your email is required." };
+  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email address." };
+  if (
+    tooLong(full_name, MAX.name) ||
+    tooLong(email, MAX.email) ||
+    tooLong(phone, MAX.phone) ||
+    tooLong(linkedin_url, MAX.url) ||
+    tooLong(resume_text, MAX.cover)
+  ) {
+    return { error: "One of the fields is too long." };
+  }
 
   const resumeInput = formData.get("resume_file");
   const resumeFile =
@@ -50,7 +70,14 @@ export async function applyToJob(
   const jobTitle = (job as { title: string }).title;
 
   // Find or create the person, de-duplicated by email.
+  //
+  // SECURITY: this endpoint is anonymous, so we must NOT overwrite an existing
+  // candidate's details — anyone could submit with someone else's email and
+  // clobber their name, contact info, or résumé (worse still if they have an
+  // account). For an existing person we only file a new application; their
+  // profile is left untouched. A brand-new person is created from the form.
   let candidateId: string;
+  let isNewPerson = false;
   const { data: existing } = await admin
     .from("candidates")
     .select("id")
@@ -59,10 +86,6 @@ export async function applyToJob(
     .maybeSingle();
   if (existing) {
     candidateId = (existing as { id: string }).id;
-    await admin
-      .from("candidates")
-      .update({ full_name, phone, linkedin_url, resume_text })
-      .eq("id", candidateId);
   } else {
     const { data: created, error } = await admin
       .from("candidates")
@@ -71,9 +94,25 @@ export async function applyToJob(
       .single();
     if (error || !created) return { error: "Could not submit your application." };
     candidateId = (created as { id: string }).id;
+    isNewPerson = true;
   }
 
-  if (resumeFile) {
+  // Lightweight rate limit: block a burst of applications from the same person.
+  // The per-job dedupe below stops same-job spam; this caps rapid cross-job
+  // submissions (e.g. a script hitting every opening at once).
+  const sinceIso = new Date(Date.now() - 60_000).toISOString();
+  const { count: recent } = await admin
+    .from("applications")
+    .select("id", { count: "exact", head: true })
+    .eq("candidate_id", candidateId)
+    .gte("created_at", sinceIso);
+  if ((recent ?? 0) >= 5) {
+    return { error: "Too many applications in a short time. Please try again shortly." };
+  }
+
+  // Only attach the résumé for a newly created person. Never overwrite an
+  // existing candidate's stored résumé from an anonymous submission.
+  if (resumeFile && isNewPerson) {
     const r = await uploadResumeFile(candidateId, resumeFile);
     if ("path" in r) {
       await admin
