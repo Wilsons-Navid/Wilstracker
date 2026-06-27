@@ -230,6 +230,17 @@ drop policy if exists jobs_delete on public.jobs;
 create policy jobs_delete on public.jobs
   for delete using (owner_id = auth.uid() or public.is_admin());
 
+-- A candidate may read a job they have applied to (for their portal).
+drop policy if exists jobs_select_applicant on public.jobs;
+create policy jobs_select_applicant on public.jobs
+  for select using (
+    exists (
+      select 1 from public.applications a
+      join public.candidates c on c.id = a.candidate_id
+      where a.job_id = jobs.id and c.auth_user_id = auth.uid()
+    )
+  );
+
 -- ---------- candidates (the person) ----------------------------------------
 -- Staff see a candidate only if they own an application for that candidate.
 -- A candidate sees only their own linked row.

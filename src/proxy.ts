@@ -9,8 +9,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * Real authorization lives in RLS + per-action checks, not here.
  */
 
-// Routes reachable without a session (public careers + apply funnel).
-const PUBLIC_PATHS = ["/login", "/auth", "/careers"];
+// Routes reachable without a session (public careers + apply funnel + signup).
+const PUBLIC_PATHS = ["/login", "/auth", "/careers", "/signup"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

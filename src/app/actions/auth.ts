@@ -37,7 +37,45 @@ export async function signIn(
     };
   }
 
-  redirect("/");
+  // Route by role: candidates land in their portal, staff on the board.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user?.id ?? "")
+    .single();
+  redirect((profile as { role: string } | null)?.role === "candidate" ? "/portal" : "/");
+}
+
+export type SignUpState = { ok: true } | { error: string } | undefined;
+
+export async function signUpCandidate(
+  _prev: SignUpState,
+  formData: FormData,
+): Promise<SignUpState> {
+  const full_name = String(formData.get("full_name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!full_name) return { error: "Your name is required." };
+  if (!email || !password) return { error: "Email and password are required." };
+  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+
+  const supabase = await createClient();
+  // role=candidate in metadata drives the handle_new_user trigger, which creates
+  // the profile and the linked candidate row.
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name, role: "candidate" } },
+  });
+  if (error) return { error: error.message };
+
+  // If the project requires email confirmation there is no session yet.
+  if (!data.session) return { ok: true };
+  redirect("/portal");
 }
 
 export async function signOut(): Promise<void> {
