@@ -12,6 +12,35 @@ function scoreColor(score: number | null) {
   return "text-rose-600";
 }
 
+function RubricBar({
+  label,
+  value,
+  max,
+}: {
+  label: string;
+  value: number;
+  max: number;
+}) {
+  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between text-xs">
+        <span className="text-muted">{label}</span>
+        <span className="font-medium">
+          {value}
+          <span className="text-muted">/{max}</span>
+        </span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-background">
+        <div
+          className="h-full rounded-full bg-accent"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function AssessmentPanel({
   candidateId,
   hasResume,
@@ -24,6 +53,16 @@ export default function AssessmentPanel({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const breakdown = (
+    latest?.raw_json as {
+      breakdown?: {
+        skills_match: number;
+        experience_match: number;
+        domain_fit: number;
+      };
+    } | null
+  )?.breakdown;
 
   function run() {
     setError(null);
@@ -47,7 +86,7 @@ export default function AssessmentPanel({
           onClick={run}
           disabled={pending || !hasResume}
           className="shrink-0 rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-50"
-          title={hasResume ? "" : "Add CV text first"}
+          title={hasResume ? "" : "Add a résumé first"}
         >
           {pending ? "Assessing…" : latest ? "Re-run" : "Run assessment"}
         </button>
@@ -55,7 +94,8 @@ export default function AssessmentPanel({
 
       {!hasResume && (
         <p className="rounded-lg bg-background px-3 py-2 text-sm text-muted">
-          Add CV / résumé text below, save, then run the assessment.
+          Upload a résumé file (PDF) or paste CV text below, then run the
+          assessment.
         </p>
       )}
 
@@ -76,6 +116,26 @@ export default function AssessmentPanel({
               {latest.recommendation}
             </span>
           </div>
+
+          {breakdown && (
+            <div className="flex flex-col gap-2.5">
+              <RubricBar
+                label="Skills match"
+                value={breakdown.skills_match}
+                max={50}
+              />
+              <RubricBar
+                label="Experience"
+                value={breakdown.experience_match}
+                max={30}
+              />
+              <RubricBar
+                label="Domain fit"
+                value={breakdown.domain_fit}
+                max={20}
+              />
+            </div>
+          )}
 
           {latest.summary && <p className="text-sm">{latest.summary}</p>}
 
