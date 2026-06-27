@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { assessCandidate } from "@/app/actions/ai";
 import type { CvAssessment } from "@/lib/types";
+
+gsap.registerPlugin(useGSAP);
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 function scoreColor(score: number | null) {
   if (score === null) return "text-muted";
@@ -33,7 +44,8 @@ function RubricBar({
       </div>
       <div className="h-1.5 w-full overflow-hidden rounded-full bg-background">
         <div
-          className="h-full rounded-full bg-accent"
+          className="rubric-fill h-full rounded-full bg-accent"
+          data-pct={pct}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -53,6 +65,43 @@ export default function AssessmentPanel({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const scoreRef = useRef<HTMLSpanElement>(null);
+
+  // When an assessment renders, count the score up from zero and grow the
+  // rubric bars to their values. Re-runs when a fresh assessment arrives.
+  useGSAP(
+    () => {
+      if (!latest || prefersReducedMotion()) return;
+
+      if (scoreRef.current && latest.score != null) {
+        const counter = { v: 0 };
+        const target = latest.score;
+        gsap.to(counter, {
+          v: target,
+          duration: 0.9,
+          ease: "power2.out",
+          onUpdate: () => {
+            if (scoreRef.current) {
+              scoreRef.current.textContent = String(Math.round(counter.v));
+            }
+          },
+        });
+      }
+
+      gsap.fromTo(
+        ".rubric-fill",
+        { width: 0 },
+        {
+          width: (_i, t) => `${(t as HTMLElement).dataset.pct}%`,
+          duration: 0.8,
+          ease: "power2.out",
+          stagger: 0.08,
+        },
+      );
+    },
+    { scope: resultsRef, dependencies: [latest?.id] },
+  );
 
   const breakdown = (
     latest?.raw_json as {
@@ -106,10 +155,10 @@ export default function AssessmentPanel({
       )}
 
       {latest && (
-        <div className="flex flex-col gap-4">
+        <div ref={resultsRef} className="flex flex-col gap-4">
           <div className="flex items-baseline gap-3">
             <span className={`text-3xl font-bold ${scoreColor(latest.score)}`}>
-              {latest.score ?? "—"}
+              <span ref={scoreRef}>{latest.score ?? "—"}</span>
               <span className="text-base font-normal text-muted">/100</span>
             </span>
             <span className="rounded-full bg-background px-2.5 py-1 text-xs font-medium">

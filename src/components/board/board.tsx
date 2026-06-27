@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import {
   DndContext,
   DragOverlay,
@@ -22,6 +24,15 @@ import {
 } from "@/lib/types";
 import { moveCandidateStage } from "@/app/actions/candidates";
 import Avatar from "@/components/ui/avatar";
+
+gsap.registerPlugin(useGSAP);
+
+function prefersReducedMotion() {
+  return (
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
 
 // Per-stage colour so the pipeline reads at a glance: a dot, a tinted count
 // chip, and a faint column wash. Full class strings (not interpolated) so
@@ -49,9 +60,47 @@ export default function Board({
   const [jobFilter, setJobFilter] = useState<string>("all");
   const [nameFilter, setNameFilter] = useState<string>("");
   const [activeId, setActiveId] = useState<string | null>(null);
+  // The card that just changed stage, with a bumping nonce so repeated moves of
+  // the same card still re-trigger the landing animation.
+  const [moved, setMoved] = useState<{ id: string; n: number } | null>(null);
+  const boardRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
+
+  // Stagger the cards in once on load.
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
+      gsap.from(".kanban-card", {
+        opacity: 0,
+        y: 8,
+        duration: 0.3,
+        ease: "power2.out",
+        stagger: 0.02,
+      });
+    },
+    { scope: boardRef },
+  );
+
+  // Pop and flash the card that just landed in a new column.
+  useGSAP(
+    () => {
+      if (!moved || prefersReducedMotion()) return;
+      const sel = `[data-card-id="${moved.id}"]`;
+      gsap.fromTo(
+        sel,
+        { scale: 0.92 },
+        { scale: 1, duration: 0.4, ease: "back.out(2)" },
+      );
+      gsap.fromTo(
+        sel,
+        { boxShadow: "0 0 0 2px var(--accent)" },
+        { boxShadow: "0 0 0 0px rgba(0,0,0,0)", duration: 0.6, ease: "power2.out" },
+      );
+    },
+    { scope: boardRef, dependencies: [moved?.n] },
   );
 
   const jobTitle = useMemo(
@@ -97,10 +146,11 @@ export default function Board({
     if (!current || current.stage === overStage) return;
 
     const previous = current.stage;
-    // Optimistic update
+    // Optimistic update, and flag the card so it animates into its new column.
     setCandidates((prev) =>
       prev.map((c) => (c.id === id ? { ...c, stage: overStage } : c)),
     );
+    setMoved((m) => ({ id, n: (m?.n ?? 0) + 1 }));
 
     const res = await moveCandidateStage(id, overStage);
     if (res.error) {
@@ -112,7 +162,7 @@ export default function Board({
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div ref={boardRef} className="flex h-full flex-col gap-4">
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
         <select
@@ -233,7 +283,8 @@ function CandidateCard({
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className={isDragging ? "opacity-40" : ""}
+      data-card-id={candidate.id}
+      className={`kanban-card ${isDragging ? "opacity-40" : ""}`}
     >
       <CardShell candidate={candidate} jobTitle={jobTitle} />
     </div>
