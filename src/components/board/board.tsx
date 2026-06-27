@@ -23,13 +23,19 @@ import {
 import { moveCandidateStage } from "@/app/actions/candidates";
 import Avatar from "@/components/ui/avatar";
 
-const STAGE_ACCENT: Record<CandidateStage, string> = {
-  applied: "bg-slate-400",
-  screening: "bg-blue-500",
-  interview: "bg-violet-500",
-  offer: "bg-amber-500",
-  hired: "bg-emerald-500",
-  rejected: "bg-rose-500",
+// Per-stage colour so the pipeline reads at a glance: a dot, a tinted count
+// chip, and a faint column wash. Full class strings (not interpolated) so
+// Tailwind keeps them in the build.
+const STAGE_STYLE: Record<
+  CandidateStage,
+  { dot: string; chip: string; tint: string }
+> = {
+  applied: { dot: "bg-slate-400", chip: "bg-slate-100 text-slate-600", tint: "bg-slate-50" },
+  screening: { dot: "bg-blue-500", chip: "bg-blue-100 text-blue-700", tint: "bg-blue-50/60" },
+  interview: { dot: "bg-amber-500", chip: "bg-amber-100 text-amber-700", tint: "bg-amber-50/60" },
+  offer: { dot: "bg-violet-500", chip: "bg-violet-100 text-violet-700", tint: "bg-violet-50/60" },
+  hired: { dot: "bg-emerald-500", chip: "bg-emerald-100 text-emerald-700", tint: "bg-emerald-50/60" },
+  rejected: { dot: "bg-rose-500", chip: "bg-rose-100 text-rose-700", tint: "bg-rose-50/60" },
 };
 
 export default function Board({
@@ -188,19 +194,22 @@ function Column({
   children: React.ReactNode;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
+  const s = STAGE_STYLE[stage];
   return (
     <div className="flex w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center gap-2 px-1">
-        <span className={`h-2 w-2 rounded-full ${STAGE_ACCENT[stage]}`} />
+        <span className={`h-2.5 w-2.5 rounded-full ${s.dot}`} />
         <span className="text-sm font-medium">{STAGE_LABELS[stage]}</span>
-        <span className="ml-auto rounded-full bg-background px-2 text-xs text-muted">
+        <span
+          className={`ml-auto rounded-full px-2 py-0.5 text-xs font-semibold ${s.chip}`}
+        >
           {count}
         </span>
       </div>
       <div
         ref={setNodeRef}
-        className={`flex min-h-32 flex-1 flex-col gap-2 rounded-xl border border-dashed p-2 transition ${
-          isOver ? "border-accent bg-accent/5" : "border-border bg-surface/40"
+        className={`flex min-h-32 flex-1 flex-col gap-2 rounded-xl border p-2 transition ${
+          isOver ? "border-accent bg-accent/10" : `border-border ${s.tint}`
         }`}
       >
         {children}
