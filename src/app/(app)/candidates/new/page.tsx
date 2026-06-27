@@ -15,7 +15,7 @@ export default async function NewCandidatePage() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-5">
-        <Link href="/" className="text-sm text-muted hover:text-foreground">
+        <Link href="/board" className="text-sm text-muted hover:text-foreground">
           ← Back to board
         </Link>
         <h1 className="mt-2 text-lg font-semibold">Add candidate</h1>

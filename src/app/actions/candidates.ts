@@ -98,7 +98,7 @@ export async function createCandidate(
   if (appErr) return { error: appErr.message };
 
   revalidatePath("/");
-  redirect("/");
+  redirect("/board");
 }
 
 export async function updateCandidate(
@@ -179,7 +179,7 @@ export async function deleteCandidate(applicationId: string): Promise<void> {
   }
 
   revalidatePath("/");
-  redirect("/");
+  redirect("/board");
 }
 
 export async function moveCandidateStage(

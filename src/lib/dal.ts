@@ -32,7 +32,7 @@ export async function requireProfile(): Promise<Profile> {
 
 export async function requireAdmin(): Promise<Profile> {
   const profile = await requireProfile();
-  if (profile.role !== "admin") redirect("/");
+  if (profile.role !== "admin") redirect("/board");
   return profile;
 }
 
@@ -62,7 +62,7 @@ export const getCandidate = cache(async (): Promise<Candidate | null> => {
 
 export async function requireCandidate(): Promise<Candidate> {
   const profile = await requireProfile();
-  if (profile.role !== "candidate") redirect("/");
+  if (profile.role !== "candidate") redirect("/board");
   const candidate = await getCandidate();
   if (!candidate) redirect("/login");
   return candidate;

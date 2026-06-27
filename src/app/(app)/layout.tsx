@@ -14,7 +14,7 @@ export default async function AppLayout({
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
-          <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Link href="/board" className="flex items-center gap-2 font-semibold">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
               W
             </span>
@@ -23,7 +23,7 @@ export default async function AppLayout({
 
           <nav className="flex items-center gap-1 text-sm">
             <Link
-              href="/"
+              href="/board"
               className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
             >
               Board

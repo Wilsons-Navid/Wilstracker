@@ -152,7 +152,7 @@ export default function CandidateCreateForm({ jobs }: { jobs: Job[] }) {
           {pending ? "Adding…" : "Add candidate"}
         </button>
         <Link
-          href="/"
+          href="/board"
           className="rounded-lg border border-border px-4 py-2.5 text-sm text-muted hover:bg-background"
         >
           Cancel

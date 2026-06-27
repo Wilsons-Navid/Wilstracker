@@ -44,7 +44,7 @@ export default async function CandidateDetailPage({
     <div className="mx-auto max-w-3xl">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <Link href="/" className="text-sm text-muted hover:text-foreground">
+          <Link href="/board" className="text-sm text-muted hover:text-foreground">
             ← Back to board
           </Link>
           <div className="mt-2 flex items-center gap-4">

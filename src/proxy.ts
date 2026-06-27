@@ -42,7 +42,9 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  // The landing page at "/" is public (it routes signed-in users onward itself).
+  // Match it exactly — "/" must not go through startsWith, which matches all.
+  const isPublic = path === "/" || PUBLIC_PATHS.some((p) => path.startsWith(p));
 
   // Unauthenticated user hitting a protected route -> /login
   if (!user && !isPublic) {
