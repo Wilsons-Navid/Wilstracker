@@ -45,3 +45,6 @@ next-env.d.ts
 
 # graphify knowledge-graph output
 /graphify-out/
+
+# but DO track the example (placeholders only, no secrets)
+!.env.local.example
