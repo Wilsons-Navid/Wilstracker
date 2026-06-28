@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getProfile } from "@/lib/dal";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendAccountCreated } from "@/lib/email";
 import type { UserRole } from "@/lib/types";
 
 export type CreateAccountState =
@@ -62,6 +63,9 @@ export async function createAccount(
     .from("profiles")
     .update({ created_by: me.id })
     .eq("id", data.user.id);
+
+  // Let the new user know their account exists (best-effort; never blocks).
+  await sendAccountCreated(email, fullName, role);
 
   revalidatePath("/admin");
   return { ok: true, message: `Created ${role} account for ${email}.` };
