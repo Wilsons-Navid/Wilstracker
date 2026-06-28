@@ -21,7 +21,8 @@ Live: [wilstracker.vercel.app](https://wilstracker.vercel.app)
 
 It was built as a one-week coding test, with the goal of getting a first
 customer live quickly on a clean, well-documented codebase, then extended with a
-full candidate experience.
+full candidate experience, richer recruiter tools, and a layout that works just
+as well on a phone.
 
 ## Table of contents
 
@@ -77,14 +78,23 @@ The candidate side was added on top of the brief:
 - Candidates can self-register for a candidate account (recruiters and admins stay admin-created).
 - Applying requires a candidate account. A signed-out visitor who clicks apply is sent to sign in or sign up and returned to the same job afterwards.
 - Each candidate has a portal that shows their applications with a stage progress track, plus a profile they can edit and a résumé they can replace.
+- If a job has custom questions, they appear on the apply form and the candidate's answers travel with the application.
+- The candidate's photo shows on their portal home, with coloured initials as a fallback.
 - Candidates receive email notifications when they apply and when their application changes stage.
 
 ### Additional capabilities
 
-- AI CV assessment. Claude scores an application against the job and returns a structured result with a numeric score, a breakdown, strengths, gaps, and a recommendation. It reads PDF and DOCX résumés directly.
-- Résumé upload. Résumé files (PDF, DOC, or DOCX) are stored privately in Supabase Storage and served through short-lived signed URLs that check ownership first.
-- Avatar upload. A candidate can have a profile photo, with coloured initials shown as a fallback.
+Built on top of both sides:
+
+- AI CV assessment. Claude scores an application against the job and returns a structured result with a numeric score, a breakdown, strengths, gaps, and a recommendation. It scores the résumé's extracted text rather than re-sending the file each time, which keeps it fast and cheap. The score also rides along on the Kanban card, colour-coded, so a recruiter can scan a column and see who to look at first. It is advisory only and never auto-rejects anyone.
+- Automatic CV text extraction. When a résumé is uploaded its text is pulled out on the server, `unpdf` for PDF and `mammoth` for DOCX, and stored next to the file. The candidate page shows both the original document and the extracted text, which staff can edit if a parse comes out rough.
+- Editable jobs and a manage page. Every job has its own manage page where the owner, or an admin, edits the description, curates the custom questions, and shares the role.
+- Custom application questions. A job can carry free-text and multiple-choice questions. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
+- Job sharing. An open role can be shared straight to X, LinkedIn, Facebook, WhatsApp, Telegram, or email, each with its own branded button.
+- Admin account management. Admins edit a customer's name, email, and role, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves.
+- Résumé and avatar storage. Files live privately in Supabase Storage and are served through short-lived signed URLs that check ownership first. Candidates manage their own photo; recruiters can see it but not change it.
 - A decoupled data model. The person and the pipeline entry are separate, so one person can apply to several jobs, and every stage change is recorded in an audit trail.
+- Works on mobile. The board, forms, and navigation adapt down to phone screens: the top nav folds into a menu, and the Kanban scrolls with a swipe while a press-and-hold moves a card.
 
 ## Tech stack
 
@@ -93,16 +103,18 @@ The candidate side was added on top of the brief:
 | Framework | Next.js 16 (App Router, Server Components, Server Actions, `proxy.ts`) |
 | Language | TypeScript, React 19 |
 | Backend | Supabase (Postgres, Auth, Row Level Security, Storage) |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS v4 |
+| Icons | lucide-react, plus inline brand SVGs for social sharing |
 | Drag and drop | @dnd-kit |
-| AI | Anthropic Claude (structured tool-use output) |
-| Document parsing | mammoth (DOCX to text for the assessment) |
+| AI | Anthropic Claude (structured tool-use output, scores extracted text) |
+| Document parsing | `unpdf` (PDF) and `mammoth` (DOCX) extract résumé text for display and the assessment |
 | Email | Resend (HTTP API, optional) |
-| Hosting | Vercel |
+| Hosting | Vercel (functions pinned to the database's region) |
 
 ## Architecture and security
 
 - Roles. Each profile has a role of `admin`, `customer`, or `candidate`, stored on `profiles.role`. The role drives routing: staff land on the board, candidates land on their portal.
+- Roles come from admins, not applicants. A new account's role is read from service-role-only `app_metadata`, never from the values a visitor can set on the public sign-up form, so self-registration can only ever create a candidate.
 - Row Level Security. Every table has RLS. Customers only see rows they own through `owner_id = auth.uid()`. Candidates only see their own person row and their own applications, and can never read assessments, notes, or stage history. Admins pass an `is_admin()` check and can see everything.
 - No policy recursion. The candidate and application policies reference each other, so the cross-table checks run through `SECURITY DEFINER` helper functions (`user_owns_candidate`, `is_my_application`) that bypass RLS and avoid an infinite-recursion error.
 - Three Supabase clients for three trust levels:
@@ -111,6 +123,8 @@ The candidate side was added on top of the brief:
   - `lib/supabase/admin.ts` is the service-role client that bypasses RLS. It imports `server-only`, so the build fails if it is ever pulled into browser code.
 - Authorize, then act. A privileged server action first checks access through the user-scoped client, where RLS makes the decision, and only then uses the service-role client for the storage or write operation. A signed résumé URL is generated from the candidate row the caller is proven to own, never from a path passed in by the caller.
 - Identity from the session, not the form. Applying takes the candidate identity from the signed-in session rather than an email field, so an application cannot be filed against someone else or used to overwrite their profile.
+- Deactivation is enforced everywhere. Disabling an account bans it at the auth layer and makes `getProfile` return null, so the user is signed out and blocked from acting, while the row is kept for a later reactivation rather than deleted.
+- Functions sit next to the data. The serverless functions are pinned to the database's region, so the handful of small queries each request makes don't cross an ocean on the way to Postgres.
 
 ## Data model
 
@@ -120,10 +134,12 @@ the pipeline on its own.
 
 | Table | Key columns | Purpose |
 |---|---|---|
-| `profiles` | `id -> auth.users`, `full_name`, `role`, `created_by` | identity and role |
+| `profiles` | `id -> auth.users`, `full_name`, `role`, `active`, `created_by` | identity, role, and whether the login is enabled |
 | `jobs` | `id`, `owner_id -> profiles`, `title`, `description`, `location`, `status` | postings |
-| `candidates` | `id`, `auth_user_id -> auth.users`, `full_name`, `email`, `phone`, `linkedin_url`, `portfolio_url`, `location`, `headline`, `resume_url`, `avatar_url` | the person |
+| `candidates` | `id`, `auth_user_id -> auth.users`, `full_name`, `email`, `phone`, `linkedin_url`, `portfolio_url`, `location`, `headline`, `resume_url`, `resume_text`, `avatar_url` | the person |
 | `applications` | `id`, `candidate_id -> candidates`, `job_id -> jobs`, `owner_id -> profiles`, `stage`, `status`, `source`, `notes`, `applied_at` | one candidate applying to one job |
+| `job_questions` | `id`, `job_id -> jobs`, `prompt`, `kind`, `options`, `position`, `required` | custom free-text or multiple-choice questions on a job |
+| `application_answers` | `id`, `application_id -> applications`, `question_id -> job_questions`, `answer` | a candidate's answers to those questions |
 | `stage_history` | `id`, `application_id -> applications`, `from_stage`, `to_stage`, `moved_by`, `moved_at` | stage movement audit |
 | `cv_assessments` | `id`, `application_id -> applications`, `score`, `summary`, `strengths`, `gaps`, `recommendation`, `raw_json` | AI feature |
 
@@ -132,27 +148,29 @@ the pipeline on its own.
 ```
 src/
   app/
-    (app)/             # staff routes: board, jobs, candidates, admin
+    (app)/             # staff routes: board, jobs (+ per-job manage page), candidates, admin
     portal/            # candidate portal: applications and profile
     careers/           # public careers list, job detail, apply
     auth/callback/     # email confirmation / PKCE code exchange
     login/  signup/    # auth pages
-    actions/           # server actions: auth, jobs, candidates, apply, ai, resume, avatar, admin, candidate-profile
+    actions/           # server actions: auth, jobs, job-questions, candidates, apply, ai, resume, avatar, admin, candidate-profile
     page.tsx           # role-aware landing page
-  components/          # board, careers, portal, candidate forms, uploads, auth, ui, public-header
+  components/          # board, careers, portal, candidate forms, job tools (edit, questions, share), uploads, auth, ui
   lib/
     supabase/
       client.ts        # browser client (anon key)
       server.ts        # server client (user session)
       admin.ts         # service-role client (server only)
     dal.ts             # getProfile / requireStaff / requireAdmin / requireCandidate / getCandidate
+    extract.ts         # résumé text extraction (unpdf / mammoth) and caching
     uploads.ts         # résumé and avatar validation and storage helpers
+    site.ts            # request-origin helper for share links
     email.ts           # Resend notifications (optional, no-op without a key)
     types.ts           # shared types mirroring the DB
   proxy.ts             # session refresh and route guard (Next 16 "middleware")
 supabase/
   schema.sql           # full target schema: tables, RLS, triggers
-  migrations/          # incremental migrations (candidate portal, RLS fixes)
+  migrations/          # incremental migrations (candidate portal, RLS fixes, secure roles, job questions, account status)
   verify_rls.sql       # RLS assertion matrix
 scripts/
   setup-storage.mjs    # create the Storage buckets
@@ -218,6 +236,8 @@ instead of re-running the full schema.
 - The person and the pipeline entry are separate, so one candidate can hold several applications across different jobs.
 - Applying requires a candidate account, so every application is verified and trackable from the portal.
 - The pipeline stages are fixed for the MVP. Custom per-job stages are future work.
+- Custom application questions are optional and per-job. A job with none simply shows the standard apply form.
 - One customer maps to one recruiting organization (a single-user tenant) for the MVP.
 - The AI assessment is advisory. It never auto-rejects a candidate.
+- Deactivating an account blocks it but keeps the data, so the action is reversible. Accounts are not hard-deleted.
 - Email notifications are best-effort through Resend and degrade to a no-op when no key is configured.
