@@ -21,7 +21,10 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
     .eq("id", user.id)
     .single();
 
-  return (data as Profile) ?? null;
+  const profile = (data as Profile) ?? null;
+  // A deactivated account is treated as signed-out everywhere.
+  if (profile && profile.active === false) return null;
+  return profile;
 });
 
 export async function requireProfile(): Promise<Profile> {

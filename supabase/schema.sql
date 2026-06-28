@@ -26,6 +26,7 @@ create table if not exists public.profiles (
   id          uuid primary key references auth.users (id) on delete cascade,
   full_name   text,
   role        public.user_role not null default 'customer',
+  active      boolean not null default true,
   created_by  uuid references public.profiles (id) on delete set null,
   created_at  timestamptz not null default now()
 );

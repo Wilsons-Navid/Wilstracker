@@ -40,6 +40,7 @@ export default async function AdminPage() {
                 <th className="pb-2 font-medium">Name</th>
                 <th className="pb-2 font-medium">Email</th>
                 <th className="pb-2 font-medium">Role</th>
+                <th className="pb-2 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>
@@ -56,6 +57,17 @@ export default async function AdminPage() {
                       }`}
                     >
                       {a.role}
+                    </span>
+                  </td>
+                  <td className="py-2.5">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        a.active
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-rose-50 text-rose-700"
+                      }`}
+                    >
+                      {a.active ? "Active" : "Deactivated"}
                     </span>
                   </td>
                 </tr>
