@@ -39,11 +39,15 @@ export async function createAccount(
 
   const admin = createAdminClient();
 
+  // Role goes in app_metadata, NOT user_metadata: app_metadata is settable only
+  // through this service-role admin API, so the handle_new_user trigger can
+  // trust it. A public self-signup can spoof user_metadata but never this.
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
-    user_metadata: { full_name: fullName, role },
+    user_metadata: { full_name: fullName },
+    app_metadata: { role },
   });
 
   if (error) {

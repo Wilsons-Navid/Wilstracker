@@ -151,7 +151,10 @@ returns trigger language plpgsql security definer set search_path = public as $$
 declare
   v_role public.user_role;
 begin
-  v_role := coalesce((new.raw_user_meta_data ->> 'role')::public.user_role, 'customer');
+  -- Role comes from app_metadata (service-role only), never user_metadata
+  -- (client-controlled on public signup). Strangers default to 'candidate'.
+  -- See migration 0004_secure_role_assignment.sql for the rationale.
+  v_role := coalesce((new.raw_app_meta_data ->> 'role')::public.user_role, 'candidate');
 
   insert into public.profiles (id, full_name, role)
   values (new.id, new.raw_user_meta_data ->> 'full_name', v_role)
