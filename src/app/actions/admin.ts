@@ -66,3 +66,111 @@ export async function createAccount(
   revalidatePath("/admin");
   return { ok: true, message: `Created ${role} account for ${email}.` };
 }
+
+export type UpdateAccountState =
+  | { ok: true; message: string }
+  | { error: string }
+  | undefined;
+
+export async function updateAccount(
+  _prev: UpdateAccountState,
+  formData: FormData,
+): Promise<UpdateAccountState> {
+  const me = await getProfile();
+  if (!me || me.role !== "admin") {
+    return { error: "Only admins can manage accounts." };
+  }
+
+  const userId = String(formData.get("user_id") ?? "").trim();
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const role = String(formData.get("role") ?? "") as UserRole;
+  const confirmEmail = String(formData.get("confirm_email") ?? "")
+    .trim()
+    .toLowerCase();
+
+  if (!userId) return { error: "Missing account." };
+  if (!fullName) return { error: "Name is required." };
+  if (!email) return { error: "Email is required." };
+  if (role !== "admin" && role !== "customer") {
+    return { error: "Invalid role." };
+  }
+  // An admin can't strip their own admin access (lockout guard).
+  if (userId === me.id && role !== "admin") {
+    return { error: "You can't remove your own admin access." };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+  if (!target) return { error: "Account not found." };
+  const currentRole = (target as { role: UserRole }).role;
+
+  const { data: authData } = await admin.auth.admin.getUserById(userId);
+  const currentEmail = authData?.user?.email?.toLowerCase() ?? "";
+
+  // Promoting to admin is sensitive — the admin must retype the account's email.
+  if (role === "admin" && currentRole !== "admin" && confirmEmail !== email) {
+    return {
+      error: "To grant admin access, retype the account's email to confirm.",
+    };
+  }
+
+  // Email lives in auth — update it there (service-role) if it changed.
+  if (email !== currentEmail) {
+    const { error: emailErr } = await admin.auth.admin.updateUserById(userId, {
+      email,
+      email_confirm: true,
+    });
+    if (emailErr) {
+      if (/exists|registered/i.test(emailErr.message)) {
+        return { error: "That email is already in use." };
+      }
+      return { error: emailErr.message };
+    }
+  }
+
+  // Name + role live on the profile (is_admin() reads profiles.role).
+  const { error: pErr } = await admin
+    .from("profiles")
+    .update({ full_name: fullName, role })
+    .eq("id", userId);
+  if (pErr) return { error: pErr.message };
+
+  revalidatePath("/admin");
+  return { ok: true, message: "Account updated." };
+}
+
+export async function setAccountActive(
+  userId: string,
+  active: boolean,
+): Promise<{ error?: string }> {
+  const me = await getProfile();
+  if (!me || me.role !== "admin") {
+    return { error: "Only admins can manage accounts." };
+  }
+  // Don't let an admin lock themselves out.
+  if (userId === me.id) {
+    return { error: "You can't deactivate your own account." };
+  }
+
+  const admin = createAdminClient();
+  // Block (or restore) login at the auth layer. ~100-year ban == deactivated.
+  const { error: banErr } = await admin.auth.admin.updateUserById(userId, {
+    ban_duration: active ? "none" : "876000h",
+  });
+  if (banErr) return { error: banErr.message };
+
+  const { error: pErr } = await admin
+    .from("profiles")
+    .update({ active })
+    .eq("id", userId);
+  if (pErr) return { error: pErr.message };
+
+  revalidatePath("/admin");
+  return {};
+}
