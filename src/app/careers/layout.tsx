@@ -27,7 +27,7 @@ export default async function CareersLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
+        <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:gap-6">
           <Link href={home} className="flex items-center gap-2 font-semibold">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
               W
@@ -41,7 +41,9 @@ export default async function CareersLayout({
             {profile.role === "candidate" ? "My applications" : "Back to board"}
           </Link>
           <div className="ml-auto flex items-center gap-3">
-            <div className="text-sm font-medium">{profile.full_name}</div>
+            <div className="hidden text-sm font-medium sm:block">
+              {profile.full_name}
+            </div>
             <form action={signOut}>
               <button className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-background hover:text-foreground">
                 Sign out

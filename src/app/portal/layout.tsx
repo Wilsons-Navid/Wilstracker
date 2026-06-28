@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireCandidate } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
+import MobileMenu from "@/components/ui/mobile-menu";
 
 export default async function PortalLayout({
   children,
@@ -8,6 +9,12 @@ export default async function PortalLayout({
   children: React.ReactNode;
 }) {
   const candidate = await requireCandidate();
+
+  const navLinks = [
+    { href: "/portal", label: "My applications" },
+    { href: "/portal/profile", label: "Profile" },
+    { href: "/careers", label: "Open roles" },
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -20,34 +27,51 @@ export default async function PortalLayout({
             WilsTracker
           </Link>
 
-          <nav className="flex items-center gap-1 text-sm">
-            <Link
-              href="/portal"
-              className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-            >
-              My applications
-            </Link>
-            <Link
-              href="/portal/profile"
-              className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-            >
-              Profile
-            </Link>
-            <Link
-              href="/careers"
-              className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-            >
-              Open roles
-            </Link>
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 text-sm md:flex">
+            {navLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
+              >
+                {l.label}
+              </Link>
+            ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          {/* Desktop user + sign out */}
+          <div className="ml-auto hidden items-center gap-3 md:flex">
             <div className="text-sm font-medium">{candidate.full_name}</div>
             <form action={signOut}>
               <button className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-background hover:text-foreground">
                 Sign out
               </button>
             </form>
+          </div>
+
+          {/* Mobile menu */}
+          <div className="ml-auto md:hidden">
+            <MobileMenu>
+              {navLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="rounded-md px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground"
+                >
+                  {l.label}
+                </Link>
+              ))}
+              <div className="my-1 border-t border-border" />
+              <div className="px-3 py-1 text-sm font-medium">
+                {candidate.full_name}
+              </div>
+              <form action={signOut}>
+                <button className="w-full rounded-md px-3 py-2 text-left text-sm text-muted hover:bg-background hover:text-foreground">
+                  Sign out
+                </button>
+              </form>
+            </MobileMenu>
           </div>
         </div>
       </header>

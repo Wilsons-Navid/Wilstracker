@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LayoutGrid, Briefcase, Shield, LogOut } from "lucide-react";
 import { requireStaff } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
+import MobileMenu from "@/components/ui/mobile-menu";
 
 export default async function AppLayout({
   children,
@@ -10,6 +11,14 @@ export default async function AppLayout({
 }) {
   const profile = await requireStaff();
   const isAdmin = profile.role === "admin";
+
+  const navLinks = [
+    { href: "/board", label: "Board", icon: <LayoutGrid className="h-4 w-4" /> },
+    { href: "/jobs", label: "Jobs", icon: <Briefcase className="h-4 w-4" /> },
+    ...(isAdmin
+      ? [{ href: "/admin", label: "Admin", icon: <Shield className="h-4 w-4" /> }]
+      : []),
+  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -22,33 +31,22 @@ export default async function AppLayout({
             WilsTracker
           </Link>
 
-          <nav className="flex items-center gap-1 text-sm">
-            <Link
-              href="/board"
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Board
-            </Link>
-            <Link
-              href="/jobs"
-              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-            >
-              <Briefcase className="h-4 w-4" />
-              Jobs
-            </Link>
-            {isAdmin && (
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 text-sm md:flex">
+            {navLinks.map((l) => (
               <Link
-                href="/admin"
+                key={l.href}
+                href={l.href}
                 className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
               >
-                <Shield className="h-4 w-4" />
-                Admin
+                {l.icon}
+                {l.label}
               </Link>
-            )}
+            ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          {/* Desktop user + sign out */}
+          <div className="ml-auto hidden items-center gap-3 md:flex">
             <div className="text-right">
               <div className="text-sm font-medium leading-tight">
                 {profile.full_name ?? "User"}
@@ -63,6 +61,37 @@ export default async function AppLayout({
                 Sign out
               </button>
             </form>
+          </div>
+
+          {/* Mobile menu */}
+          <div className="ml-auto md:hidden">
+            <MobileMenu>
+              {navLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground"
+                >
+                  {l.icon}
+                  {l.label}
+                </Link>
+              ))}
+              <div className="my-1 border-t border-border" />
+              <div className="px-3 py-1">
+                <div className="text-sm font-medium leading-tight">
+                  {profile.full_name ?? "User"}
+                </div>
+                <div className="text-xs capitalize text-muted leading-tight">
+                  {profile.role}
+                </div>
+              </div>
+              <form action={signOut}>
+                <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground">
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              </form>
+            </MobileMenu>
           </div>
         </div>
       </header>
