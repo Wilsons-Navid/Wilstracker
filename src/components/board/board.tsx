@@ -291,6 +291,13 @@ function CandidateCard({
   );
 }
 
+// Traffic-light colours for the AI score, matching the assessment panel.
+function scoreClasses(score: number): string {
+  if (score >= 75) return "bg-emerald-50 text-emerald-700";
+  if (score >= 50) return "bg-amber-50 text-amber-700";
+  return "bg-rose-50 text-rose-700";
+}
+
 function CardShell({
   candidate,
   jobTitle,
@@ -322,18 +329,28 @@ function CardShell({
             >
               {candidate.full_name}
             </Link>
-            {candidate.linkedin_url && (
-              <a
-                href={candidate.linkedin_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 text-xs font-medium text-accent hover:underline"
-              >
-                in ↗
-              </a>
-            )}
+            <div className="flex shrink-0 items-center gap-1.5">
+              {candidate.score != null && (
+                <span
+                  title="AI assessment score"
+                  className={`rounded-full px-1.5 py-0.5 text-xs font-semibold tabular-nums ${scoreClasses(candidate.score)}`}
+                >
+                  {candidate.score}
+                </span>
+              )}
+              {candidate.linkedin_url && (
+                <a
+                  href={candidate.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-xs font-medium text-accent hover:underline"
+                >
+                  in ↗
+                </a>
+              )}
+            </div>
           </div>
           {jobTitle && (
             <div className="mt-1.5">

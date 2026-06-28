@@ -14,17 +14,36 @@ export default async function BoardPage() {
   const supabase = await createClient();
 
   // RLS scopes these automatically: customers see their own rows; admins see all.
-  const [{ data: jobs }, { data: apps, count }] = await Promise.all([
-    supabase.from("jobs").select("*").order("created_at", { ascending: true }),
-    supabase
-      .from("applications")
-      .select(
-        "id, stage, job_id, candidate:candidates(id, full_name, avatar_url, linkedin_url)",
-        { count: "exact" },
-      )
-      .order("applied_at", { ascending: false })
-      .limit(BOARD_LIMIT),
-  ]);
+  const [{ data: jobs }, { data: apps, count }, { data: assessments }] =
+    await Promise.all([
+      supabase
+        .from("jobs")
+        .select("*")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("applications")
+        .select(
+          "id, stage, job_id, candidate:candidates(id, full_name, avatar_url, linkedin_url)",
+          { count: "exact" },
+        )
+        .order("applied_at", { ascending: false })
+        .limit(BOARD_LIMIT),
+      supabase
+        .from("cv_assessments")
+        .select("application_id, score, created_at")
+        .order("created_at", { ascending: false }),
+    ]);
+
+  // Keep only the most recent assessment score per application. Rows arrive
+  // newest-first, so the first one seen for an application is the latest.
+  const scoreByApp = new Map<string, number>();
+  for (const a of (assessments as
+    | { application_id: string; score: number | null }[]
+    | null) ?? []) {
+    if (a.score != null && !scoreByApp.has(a.application_id)) {
+      scoreByApp.set(a.application_id, a.score);
+    }
+  }
 
   // Flatten each application + its candidate into a single board card.
   const cards: PipelineCard[] = (apps ?? []).map((a) => {
@@ -42,6 +61,7 @@ export default async function BoardPage() {
       linkedin_url: cand?.linkedin_url ?? null,
       job_id: (a.job_id as string | null) ?? null,
       stage: a.stage as PipelineCard["stage"],
+      score: scoreByApp.get(a.id as string) ?? null,
     };
   });
 

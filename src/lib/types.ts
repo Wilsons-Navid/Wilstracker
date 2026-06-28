@@ -78,6 +78,7 @@ export interface PipelineCard {
   linkedin_url: string | null;
   job_id: string | null;
   stage: CandidateStage;
+  score: number | null; // latest AI assessment score, if any
 }
 
 // The pipeline entry: one candidate applying to one job.
