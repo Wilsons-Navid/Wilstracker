@@ -5,7 +5,6 @@ import { deleteCandidate } from "@/app/actions/candidates";
 import CandidateEditForm from "@/components/candidates/candidate-edit-form";
 import AssessmentPanel from "@/components/candidates/assessment-panel";
 import ResumeUpload from "@/components/candidates/resume-upload";
-import AvatarUpload from "@/components/candidates/avatar-upload";
 import Avatar from "@/components/ui/avatar";
 import { getResumeSignedUrl } from "@/app/actions/resume";
 import type { Application, Candidate, CvAssessment, Job } from "@/lib/types";
@@ -92,11 +91,6 @@ export default async function CandidateDetailPage({
           applicationId={app.id}
           hasResume={!!c.resume_text?.trim() || !!c.resume_url}
           latest={(assessment as CvAssessment | null) ?? null}
-        />
-        <AvatarUpload
-          candidateId={c.id}
-          name={c.full_name}
-          avatarUrl={c.avatar_url}
         />
         <ResumeUpload
           candidateId={c.id}

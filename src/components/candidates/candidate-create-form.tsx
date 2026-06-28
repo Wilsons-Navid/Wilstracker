@@ -92,33 +92,18 @@ export default function CandidateCreateForm({ jobs }: { jobs: Job[] }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="avatar" className="text-sm font-medium">
-            Photo{" "}
-            <span className="font-normal text-muted">(optional)</span>
-          </label>
-          <input
-            id="avatar"
-            name="avatar"
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-fg hover:file:opacity-90"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="resume_file" className="text-sm font-medium">
-            Résumé file{" "}
-            <span className="font-normal text-muted">(PDF/DOC/DOCX)</span>
-          </label>
-          <input
-            id="resume_file"
-            name="resume_file"
-            type="file"
-            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-fg hover:file:opacity-90"
-          />
-        </div>
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="resume_file" className="text-sm font-medium">
+          Résumé file{" "}
+          <span className="font-normal text-muted">(PDF/DOC/DOCX)</span>
+        </label>
+        <input
+          id="resume_file"
+          name="resume_file"
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="text-sm file:mr-3 file:rounded-md file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-accent-fg hover:file:opacity-90"
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">

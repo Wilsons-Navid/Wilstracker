@@ -7,12 +7,7 @@ import { getProfile } from "@/lib/dal";
 import { sendStageChanged } from "@/lib/email";
 import type { CandidateStage } from "@/lib/types";
 import { STAGES } from "@/lib/types";
-import {
-  uploadAvatarFile,
-  uploadResumeFile,
-  validateAvatarFile,
-  validateResumeFile,
-} from "@/lib/uploads";
+import { uploadResumeFile, validateResumeFile } from "@/lib/uploads";
 
 export type CandidateFormState = { ok: true } | { error: string } | undefined;
 
@@ -34,18 +29,11 @@ export async function createCandidate(
   if (!job_id) return { error: "Please choose a job." };
   if (!STAGES.includes(stage)) return { error: "Invalid stage." };
 
-  // Optional file inputs. Validate them BEFORE inserting, so a bad file is
+  // Optional résumé file. Validate it BEFORE inserting, so a bad file is
   // rejected cleanly instead of leaving a half-created candidate behind.
-  const avatarInput = formData.get("avatar");
   const resumeInput = formData.get("resume_file");
-  const avatarFile =
-    avatarInput instanceof File && avatarInput.size > 0 ? avatarInput : null;
   const resumeFile =
     resumeInput instanceof File && resumeInput.size > 0 ? resumeInput : null;
-  if (avatarFile) {
-    const invalid = validateAvatarFile(avatarFile);
-    if (invalid) return { error: invalid };
-  }
   if (resumeFile) {
     const invalid = validateResumeFile(resumeFile);
     if (invalid) return { error: invalid };
@@ -73,18 +61,15 @@ export async function createCandidate(
   }
   const candidateId = (created as { id: string }).id;
 
-  // 2. Files are keyed by candidate ID, so they upload after the row exists.
-  const updates: { avatar_url?: string; resume_url?: string } = {};
-  if (avatarFile) {
-    const r = await uploadAvatarFile(candidateId, avatarFile);
-    if ("url" in r) updates.avatar_url = r.url;
-  }
+  // 2. The résumé is keyed by candidate ID, so it uploads after the row exists.
   if (resumeFile) {
     const r = await uploadResumeFile(candidateId, resumeFile);
-    if ("path" in r) updates.resume_url = r.path;
-  }
-  if (updates.avatar_url || updates.resume_url) {
-    await supabase.from("candidates").update(updates).eq("id", candidateId);
+    if ("path" in r) {
+      await supabase
+        .from("candidates")
+        .update({ resume_url: r.path })
+        .eq("id", candidateId);
+    }
   }
 
   // 3. The pipeline entry that lands on the board.
