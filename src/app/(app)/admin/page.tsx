@@ -2,10 +2,11 @@ import { requireAdmin } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import CreateAccountForm from "@/components/admin/create-account-form";
+import AccountRow from "@/components/admin/account-row";
 import type { Profile } from "@/lib/types";
 
 export default async function AdminPage() {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const supabase = await createClient();
   const { data: profiles } = await supabase
@@ -41,36 +42,17 @@ export default async function AdminPage() {
                 <th className="pb-2 font-medium">Email</th>
                 <th className="pb-2 font-medium">Role</th>
                 <th className="pb-2 font-medium">Status</th>
+                <th className="pb-2 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
               {accounts.map((a) => (
-                <tr key={a.id} className="border-b border-border/60">
-                  <td className="py-2.5 font-medium">{a.full_name ?? "—"}</td>
-                  <td className="py-2.5 text-muted">{emailById.get(a.id)}</td>
-                  <td className="py-2.5">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        a.role === "admin"
-                          ? "bg-accent/10 text-accent"
-                          : "bg-background text-muted"
-                      }`}
-                    >
-                      {a.role}
-                    </span>
-                  </td>
-                  <td className="py-2.5">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        a.active
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-rose-50 text-rose-700"
-                      }`}
-                    >
-                      {a.active ? "Active" : "Deactivated"}
-                    </span>
-                  </td>
-                </tr>
+                <AccountRow
+                  key={a.id}
+                  account={a}
+                  email={emailById.get(a.id) ?? "—"}
+                  currentUserId={me.id}
+                />
               ))}
             </tbody>
           </table>
