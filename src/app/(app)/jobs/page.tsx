@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Settings, Trash2 } from "lucide-react";
 import { getProfile } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { deleteJob } from "@/app/actions/jobs";
@@ -73,15 +74,17 @@ export default async function JobsPage() {
                 </span>
                 <Link
                   href={`/jobs/${job.id}`}
-                  className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:bg-background hover:text-foreground"
+                  className="inline-flex items-center gap-1 rounded-md border border-accent/30 px-2.5 py-1 text-xs font-medium text-accent transition hover:bg-accent/10"
                 >
+                  <Settings className="h-3.5 w-3.5" />
                   Manage
                 </Link>
                 <form action={deleteJob.bind(null, job.id)}>
                   <button
-                    className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:bg-red-50 hover:text-red-600"
+                    className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1 text-xs font-medium text-red-600 transition hover:bg-red-50"
                     title="Delete job"
                   >
+                    <Trash2 className="h-3.5 w-3.5" />
                     Delete
                   </button>
                 </form>
