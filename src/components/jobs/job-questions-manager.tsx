@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Pencil, Trash2 } from "lucide-react";
 import {
   addJobQuestion,
   updateJobQuestion,
@@ -223,16 +224,18 @@ function QuestionRow({ question }: { question: JobQuestion }) {
       <button
         type="button"
         onClick={() => setEditing(true)}
-        className="text-sm text-muted hover:text-foreground"
+        className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-foreground"
       >
+        <Pencil className="h-3.5 w-3.5" />
         Edit
       </button>
       <button
         type="button"
         onClick={remove}
         disabled={deleting}
-        className="text-sm text-muted hover:text-red-600 disabled:opacity-50"
+        className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-red-600 disabled:opacity-50"
       >
+        <Trash2 className="h-3.5 w-3.5" />
         {deleting ? "…" : "Delete"}
       </button>
     </li>

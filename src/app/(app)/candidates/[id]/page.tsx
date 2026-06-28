@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCandidate } from "@/app/actions/candidates";
@@ -80,7 +81,8 @@ export default async function CandidateDetailPage({
           </div>
         </div>
         <form action={deleteCandidate.bind(null, app.id)}>
-          <button className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-red-50 hover:text-red-600">
+          <button className="inline-flex items-center gap-1.5 rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50">
+            <Trash2 className="h-4 w-4" />
             Delete
           </button>
         </form>

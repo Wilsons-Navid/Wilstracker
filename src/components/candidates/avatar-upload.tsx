@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { uploadAvatar, removeAvatar } from "@/app/actions/avatar";
 import Avatar from "@/components/ui/avatar";
 
@@ -85,8 +86,9 @@ export default function AvatarUpload({
             <button
               onClick={remove}
               disabled={pending}
-              className="self-start text-sm text-muted hover:text-red-600 disabled:opacity-50"
+              className="inline-flex items-center gap-1 self-start text-sm text-muted transition hover:text-red-600 disabled:opacity-50"
             >
+              <Trash2 className="h-3.5 w-3.5" />
               Remove photo
             </button>
           )}
