@@ -1,10 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import { Mail, Copy, Check } from "lucide-react";
+import {
+  XIcon,
+  LinkedInIcon,
+  FacebookIcon,
+  WhatsAppIcon,
+  TelegramIcon,
+} from "@/components/ui/brand-icons";
 
-// Share a public job link to social platforms. The absolute URL is computed on
-// the server (from the request host) and passed in, so there's no browser-only
-// effect and the share targets work in dev and prod alike.
+// Style A: white buttons, brand-colored logos, neutral labels. The absolute URL
+// is computed server-side and passed in (no browser-only effect).
 export default function ShareJob({
   url,
   title,
@@ -17,16 +24,38 @@ export default function ShareJob({
   const text = `Check out this role: ${title}`;
   const e = encodeURIComponent;
 
-  const targets: { label: string; href: string }[] = [
-    { label: "X", href: `https://twitter.com/intent/tweet?text=${e(text)}&url=${e(url)}` },
+  const iconCls = "h-4 w-4 shrink-0";
+  const targets: { label: string; href: string; icon: React.ReactNode }[] = [
+    {
+      label: "X",
+      href: `https://twitter.com/intent/tweet?text=${e(text)}&url=${e(url)}`,
+      icon: <XIcon className={iconCls} />,
+    },
     {
       label: "LinkedIn",
       href: `https://www.linkedin.com/sharing/share-offsite/?url=${e(url)}`,
+      icon: <LinkedInIcon className={iconCls} />,
     },
-    { label: "Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${e(url)}` },
-    { label: "WhatsApp", href: `https://wa.me/?text=${e(`${text} ${url}`)}` },
-    { label: "Telegram", href: `https://t.me/share/url?url=${e(url)}&text=${e(text)}` },
-    { label: "Email", href: `mailto:?subject=${e(title)}&body=${e(`${text}\n${url}`)}` },
+    {
+      label: "Facebook",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${e(url)}`,
+      icon: <FacebookIcon className={iconCls} />,
+    },
+    {
+      label: "WhatsApp",
+      href: `https://wa.me/?text=${e(`${text} ${url}`)}`,
+      icon: <WhatsAppIcon className={iconCls} />,
+    },
+    {
+      label: "Telegram",
+      href: `https://t.me/share/url?url=${e(url)}&text=${e(text)}`,
+      icon: <TelegramIcon className={iconCls} />,
+    },
+    {
+      label: "Email",
+      href: `mailto:?subject=${e(title)}&body=${e(`${text}\n${url}`)}`,
+      icon: <Mail className={`${iconCls} text-muted`} />,
+    },
   ];
 
   async function copy() {
@@ -38,6 +67,9 @@ export default function ShareJob({
       // Clipboard can be blocked; the link is visible below as a fallback.
     }
   }
+
+  const btnCls =
+    "inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition hover:bg-background hover:shadow-sm";
 
   return (
     <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
@@ -53,17 +85,19 @@ export default function ShareJob({
             href={t.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-background"
+            className={btnCls}
           >
+            {t.icon}
             {t.label}
           </a>
         ))}
-        <button
-          onClick={copy}
-          type="button"
-          className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-background"
-        >
-          {copied ? "Copied ✓" : "Copy link"}
+        <button onClick={copy} type="button" className={btnCls}>
+          {copied ? (
+            <Check className={`${iconCls} text-emerald-600`} />
+          ) : (
+            <Copy className={`${iconCls} text-muted`} />
+          )}
+          {copied ? "Copied" : "Copy link"}
         </button>
       </div>
 
