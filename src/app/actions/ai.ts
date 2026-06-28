@@ -3,23 +3,10 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile } from "@/lib/dal";
-import { extractResumeText } from "@/lib/extract";
+import { ensureResumeText } from "@/lib/extract";
 
 export type AssessResult = { ok: true } | { error: string };
-
-const RESUME_BUCKET = "resumes";
-
-const DOCX_MIME =
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-
-/** Best-effort MIME from a stored résumé path so we can extract its text. */
-function mimeFromPath(path: string): string {
-  if (/\.pdf$/i.test(path)) return "application/pdf";
-  if (/\.docx$/i.test(path)) return DOCX_MIME;
-  return "application/octet-stream"; // legacy .doc / unknown → no extraction
-}
 
 export async function assessCandidate(
   applicationId: string,
@@ -47,29 +34,10 @@ export async function assessCandidate(
   };
   const jobId = app.job_id as string | null;
 
-  // The AI scores the extracted *text* (cheap), never the PDF document. Prefer
-  // the cached text; if it's missing but a file exists (e.g. a résumé uploaded
-  // before extraction was added), extract it once now and cache it.
-  let cvText = candidate.resume_text?.trim() ?? "";
-  if (!cvText && candidate.resume_url) {
-    const admin = createAdminClient();
-    const { data: blob } = await admin.storage
-      .from(RESUME_BUCKET)
-      .download(candidate.resume_url);
-    if (blob) {
-      const extracted = await extractResumeText(
-        await blob.arrayBuffer(),
-        mimeFromPath(candidate.resume_url),
-      );
-      if (extracted) {
-        cvText = extracted;
-        await admin
-          .from("candidates")
-          .update({ resume_text: extracted })
-          .eq("id", candidate.id);
-      }
-    }
-  }
+  // The AI scores the extracted *text* (cheap), never the PDF document. The text
+  // is normally cached at upload / on the candidate page; this backfills it for
+  // older résumés on first use.
+  const cvText = await ensureResumeText(candidate);
 
   if (!cvText) {
     return {

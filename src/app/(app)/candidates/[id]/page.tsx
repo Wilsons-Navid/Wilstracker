@@ -8,6 +8,7 @@ import AssessmentPanel from "@/components/candidates/assessment-panel";
 import ResumeUpload from "@/components/candidates/resume-upload";
 import Avatar from "@/components/ui/avatar";
 import { getResumeSignedUrl } from "@/app/actions/resume";
+import { ensureResumeText } from "@/lib/extract";
 import type { Application, Candidate, CvAssessment, Job } from "@/lib/types";
 
 export default async function CandidateDetailPage({
@@ -31,6 +32,11 @@ export default async function CandidateDetailPage({
   const job = app.job;
 
   const resumeSignedUrl = c.resume_url ? await getResumeSignedUrl(c.id) : null;
+
+  // Make the extracted CV text available immediately — no need to run the AI.
+  // Backfills + caches it the first time an older résumé is viewed.
+  const cvText = await ensureResumeText(c);
+  if (cvText) c.resume_text = cvText;
 
   const { data: assessment } = await supabase
     .from("cv_assessments")
@@ -100,6 +106,19 @@ export default async function CandidateDetailPage({
           hasFile={!!c.resume_url}
           signedUrl={resumeSignedUrl}
         />
+
+        {c.resume_text?.trim() && (
+          <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="text-base font-semibold">Extracted CV text</h2>
+            <p className="mb-3 text-xs text-muted">
+              Pulled from the résumé automatically — this is what the AI
+              assessment scores. Edit it below if needed.
+            </p>
+            <div className="max-h-64 overflow-y-auto whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm leading-relaxed text-muted">
+              {c.resume_text}
+            </div>
+          </section>
+        )}
 
         {answers.length > 0 && (
           <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">

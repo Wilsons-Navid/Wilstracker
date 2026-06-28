@@ -1,10 +1,19 @@
 import "server-only";
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const PDF = "application/pdf";
 const DOCX =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+const RESUME_BUCKET = "resumes";
+
+/** Best-effort MIME from a stored résumé path so we can extract its text. */
+function mimeFromPath(path: string): string {
+  if (/\.pdf$/i.test(path)) return PDF;
+  if (/\.docx$/i.test(path)) return DOCX;
+  return "application/octet-stream"; // legacy .doc / unknown → no extraction
+}
 
 /**
  * Extract plain text from a résumé so the AI can assess it cheaply (text instead
@@ -42,4 +51,38 @@ export async function extractResumeTextFromFile(
   file: File,
 ): Promise<string | null> {
   return extractResumeText(await file.arrayBuffer(), file.type);
+}
+
+/**
+ * Returns a candidate's CV text, extracting it from the stored résumé file and
+ * caching it on first need. Used so the text is visible on the candidate page
+ * (and ready for the AI) without anyone running the assessment. Never sends the
+ * PDF to the AI. Returns "" when there's nothing to extract.
+ */
+export async function ensureResumeText(candidate: {
+  id: string;
+  resume_text: string | null;
+  resume_url: string | null;
+}): Promise<string> {
+  const existing = candidate.resume_text?.trim() ?? "";
+  if (existing) return existing;
+  if (!candidate.resume_url) return "";
+
+  const admin = createAdminClient();
+  const { data: blob } = await admin.storage
+    .from(RESUME_BUCKET)
+    .download(candidate.resume_url);
+  if (!blob) return "";
+
+  const extracted = await extractResumeText(
+    await blob.arrayBuffer(),
+    mimeFromPath(candidate.resume_url),
+  );
+  if (!extracted) return "";
+
+  await admin
+    .from("candidates")
+    .update({ resume_text: extracted })
+    .eq("id", candidate.id);
+  return extracted;
 }
