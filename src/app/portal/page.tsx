@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getCandidate } from "@/lib/dal";
+import Avatar from "@/components/ui/avatar";
 import { STAGE_LABELS, type CandidateStage } from "@/lib/types";
 
 const TRACK: CandidateStage[] = ["applied", "screening", "interview", "offer", "hired"];
 
 export default async function MyApplicationsPage() {
   const supabase = await createClient();
+  const candidate = await getCandidate();
   // RLS returns only this candidate's applications; the applicant job-read
   // policy makes the joined job title visible.
   const { data } = await supabase
@@ -23,6 +26,25 @@ export default async function MyApplicationsPage() {
 
   return (
     <div>
+      {candidate && (
+        <div className="mb-6 flex items-center gap-4">
+          <Avatar
+            name={candidate.full_name}
+            photoUrl={candidate.avatar_url}
+            size="lg"
+          />
+          <div>
+            <p className="text-xl font-semibold">{candidate.full_name}</p>
+            <Link
+              href="/portal/profile"
+              className="text-sm text-accent hover:underline"
+            >
+              Edit profile
+            </Link>
+          </div>
+        </div>
+      )}
+
       <h1 className="mb-1 text-xl font-semibold">My applications</h1>
       <p className="mb-6 text-sm text-muted">
         Track where you are in each hiring process.
