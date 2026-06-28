@@ -1,29 +1,24 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
-import mammoth from "mammoth";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile } from "@/lib/dal";
+import { extractResumeText } from "@/lib/extract";
 
 export type AssessResult = { ok: true } | { error: string };
 
-/** Pull plain text out of an uploaded .docx in the resumes bucket. Returns null on any failure. */
-async function extractDocxText(path: string): Promise<string | null> {
-  try {
-    const admin = createAdminClient();
-    const { data: blob, error } = await admin.storage
-      .from("resumes")
-      .download(path);
-    if (error || !blob) return null;
-    const { value } = await mammoth.extractRawText({
-      buffer: Buffer.from(await blob.arrayBuffer()),
-    });
-    return value.trim() || null;
-  } catch {
-    return null;
-  }
+const RESUME_BUCKET = "resumes";
+
+const DOCX_MIME =
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+/** Best-effort MIME from a stored résumé path so we can extract its text. */
+function mimeFromPath(path: string): string {
+  if (/\.pdf$/i.test(path)) return "application/pdf";
+  if (/\.docx$/i.test(path)) return DOCX_MIME;
+  return "application/octet-stream"; // legacy .doc / unknown → no extraction
 }
 
 export async function assessCandidate(
@@ -38,24 +33,48 @@ export async function assessCandidate(
   const { data: app, error: aErr } = await supabase
     .from("applications")
     .select(
-      "id, job_id, candidate:candidates(full_name, resume_text, resume_url)",
+      "id, job_id, candidate:candidates(id, full_name, resume_text, resume_url)",
     )
     .eq("id", applicationId)
     .single();
   if (aErr || !app) return { error: "Application not found." };
 
   const candidate = app.candidate as unknown as {
+    id: string;
     full_name: string;
     resume_text: string | null;
     resume_url: string | null;
   };
   const jobId = app.job_id as string | null;
 
-  const hasText = !!candidate.resume_text?.trim();
-  const isPdf = /\.pdf$/i.test(candidate.resume_url ?? "");
-  if (!hasText && !candidate.resume_url) {
+  // The AI scores the extracted *text* (cheap), never the PDF document. Prefer
+  // the cached text; if it's missing but a file exists (e.g. a résumé uploaded
+  // before extraction was added), extract it once now and cache it.
+  let cvText = candidate.resume_text?.trim() ?? "";
+  if (!cvText && candidate.resume_url) {
+    const admin = createAdminClient();
+    const { data: blob } = await admin.storage
+      .from(RESUME_BUCKET)
+      .download(candidate.resume_url);
+    if (blob) {
+      const extracted = await extractResumeText(
+        await blob.arrayBuffer(),
+        mimeFromPath(candidate.resume_url),
+      );
+      if (extracted) {
+        cvText = extracted;
+        await admin
+          .from("candidates")
+          .update({ resume_text: extracted })
+          .eq("id", candidate.id);
+      }
+    }
+  }
+
+  if (!cvText) {
     return {
-      error: "Add a résumé first — upload a file or paste the CV text.",
+      error:
+        "Couldn't read the résumé text. Upload a text-based PDF or DOCX, or paste the CV text on the candidate.",
     };
   }
   // A score is only meaningful against a specific role — require the job.
@@ -98,44 +117,9 @@ ${jobBlock}
 
 Candidate name: ${candidate.full_name}`;
 
-  // Prefer the uploaded résumé file (PDF — Claude reads it natively, OCR included);
-  // fall back to pasted CV text. DOC/DOCX can't be sent directly.
-  let content: Anthropic.MessageParam["content"];
-  if (candidate.resume_url && isPdf) {
-    const admin = createAdminClient();
-    const { data: blob, error: dlErr } = await admin.storage
-      .from("resumes")
-      .download(candidate.resume_url);
-    if (dlErr || !blob) {
-      return { error: "Could not load the résumé file. Try re-uploading it." };
-    }
-    const data = Buffer.from(await blob.arrayBuffer()).toString("base64");
-    content = [
-      {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data },
-      },
-      {
-        type: "text",
-        text: `${promptHeader}\n\nThe candidate's CV is the attached PDF document.`,
-      },
-    ];
-  } else {
-    // Text path: prefer extracting an uploaded .docx, else use pasted text.
-    let cvText = candidate.resume_text?.trim() ?? "";
-    if (candidate.resume_url && /\.docx$/i.test(candidate.resume_url)) {
-      const extracted = await extractDocxText(candidate.resume_url);
-      if (extracted) cvText = extracted;
-    }
-    if (!cvText) {
-      return {
-        error: candidate.resume_url
-          ? "Couldn't read text from this résumé file (legacy .doc isn't supported). Upload a PDF or .docx, or paste the CV text."
-          : "Add a résumé first — upload a PDF/Word file or paste the CV text.",
-      };
-    }
-    content = `${promptHeader}\n\nCV:\n${cvText}`;
-  }
+  // Always send the extracted text — never the PDF document block — to keep the
+  // assessment cheap.
+  const content: Anthropic.MessageParam["content"] = `${promptHeader}\n\nCV:\n${cvText}`;
 
   let input: {
     breakdown: {
