@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCandidate } from "@/lib/dal";
 import Avatar from "@/components/ui/avatar";
@@ -62,6 +63,7 @@ export default async function MyApplicationsPage() {
         <ul className="flex flex-col gap-4">
           {apps.map((a) => {
             const rejected = a.stage === "rejected";
+            const isHired = a.stage === "hired";
             const idx = TRACK.indexOf(a.stage);
             return (
               <li
@@ -87,23 +89,64 @@ export default async function MyApplicationsPage() {
                     Not moving forward
                   </p>
                 ) : (
-                  <div className="mt-4 flex items-center gap-1.5">
-                    {TRACK.map((s, i) => (
-                      <div key={s} className="flex flex-1 flex-col items-center gap-1">
+                  <div className="mt-5 flex">
+                    {TRACK.map((s, i) => {
+                      const done = i < idx || (isHired && i <= idx);
+                      const current = i === idx && !isHired;
+                      return (
                         <div
-                          className={`h-1.5 w-full rounded-full ${
-                            i <= idx ? "bg-accent" : "bg-background"
-                          }`}
-                        />
-                        <span
-                          className={`text-[11px] ${
-                            i === idx ? "font-semibold text-foreground" : "text-muted"
-                          }`}
+                          key={s}
+                          className="relative flex flex-1 flex-col items-center"
                         >
-                          {STAGE_LABELS[s]}
-                        </span>
-                      </div>
-                    ))}
+                          {/* connector into this step */}
+                          {i > 0 && (
+                            <span
+                              className={`absolute right-1/2 left-0 top-3 h-0.5 ${
+                                i <= idx ? "bg-accent" : "bg-border"
+                              }`}
+                            />
+                          )}
+                          {/* connector out of this step */}
+                          {i < TRACK.length - 1 && (
+                            <span
+                              className={`absolute right-0 left-1/2 top-3 h-0.5 ${
+                                i < idx ? "bg-accent" : "bg-border"
+                              }`}
+                            />
+                          )}
+                          <span
+                            className={`relative z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 ${
+                              done
+                                ? "border-accent bg-accent text-white"
+                                : current
+                                  ? "border-accent bg-accent text-white ring-4 ring-accent/15"
+                                  : "border-border bg-surface"
+                            }`}
+                          >
+                            {done ? (
+                              <Check className="h-3.5 w-3.5" />
+                            ) : (
+                              <span
+                                className={`h-2 w-2 rounded-full ${
+                                  current ? "bg-white" : "bg-border"
+                                }`}
+                              />
+                            )}
+                          </span>
+                          <span
+                            className={`mt-2 text-center text-[11px] leading-tight ${
+                              current
+                                ? "font-semibold text-foreground"
+                                : done
+                                  ? "text-foreground"
+                                  : "text-muted"
+                            }`}
+                          >
+                            {STAGE_LABELS[s]}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </li>
