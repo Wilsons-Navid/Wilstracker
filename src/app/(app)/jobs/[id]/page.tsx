@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getOrigin } from "@/lib/site";
@@ -52,9 +53,10 @@ export default async function ManageJobPage({
         </div>
         <Link
           href={`/careers/${job.id}`}
-          className="text-sm text-accent hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-accent hover:underline"
         >
-          View public page ↗
+          View public page
+          <ExternalLink className="h-3.5 w-3.5" />
         </Link>
       </div>
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LayoutGrid, Briefcase, Shield, LogOut } from "lucide-react";
 import { requireStaff } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
 
@@ -24,21 +25,24 @@ export default async function AppLayout({
           <nav className="flex items-center gap-1 text-sm">
             <Link
               href="/board"
-              className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
             >
+              <LayoutGrid className="h-4 w-4" />
               Board
             </Link>
             <Link
               href="/jobs"
-              className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
+              className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
             >
+              <Briefcase className="h-4 w-4" />
               Jobs
             </Link>
             {isAdmin && (
               <Link
                 href="/admin"
-                className="rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
               >
+                <Shield className="h-4 w-4" />
                 Admin
               </Link>
             )}
@@ -54,7 +58,8 @@ export default async function AppLayout({
               </div>
             </div>
             <form action={signOut}>
-              <button className="rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-background hover:text-foreground">
+              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-background hover:text-foreground">
+                <LogOut className="h-4 w-4" />
                 Sign out
               </button>
             </form>

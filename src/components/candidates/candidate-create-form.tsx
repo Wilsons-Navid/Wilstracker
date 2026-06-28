@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import {
   createCandidate,
   type CandidateFormState,
@@ -132,8 +133,9 @@ export default function CandidateCreateForm({ jobs }: { jobs: Job[] }) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
         >
+          <Plus className="h-4 w-4" />
           {pending ? "Adding…" : "Add candidate"}
         </button>
         <Link

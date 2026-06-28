@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { Plus } from "lucide-react";
 import { createJob, type JobFormState } from "@/app/actions/jobs";
 import type { Profile } from "@/lib/types";
 
@@ -103,8 +104,9 @@ export default function CreateJobForm({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
       >
+        <Plus className="h-4 w-4" />
         {pending ? "Posting…" : "Post job"}
       </button>
     </form>

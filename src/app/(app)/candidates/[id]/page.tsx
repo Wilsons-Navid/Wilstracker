@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
+import { Trash2, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { deleteCandidate } from "@/app/actions/candidates";
@@ -70,9 +70,10 @@ export default async function CandidateDetailPage({
                       href={c.linkedin_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-accent hover:underline"
+                      className="inline-flex items-center gap-0.5 text-accent hover:underline"
                     >
-                      LinkedIn ↗
+                      LinkedIn
+                      <ExternalLink className="h-3 w-3" />
                     </a>
                   </>
                 )}

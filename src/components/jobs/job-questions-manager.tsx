@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 import {
   addJobQuestion,
   updateJobQuestion,
@@ -97,9 +97,10 @@ function AddQuestion({ jobId }: { jobId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="self-start rounded-lg border border-border px-3 py-1.5 text-sm font-medium hover:bg-background"
+        className="inline-flex items-center gap-1.5 self-start rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-background"
       >
-        + Add question
+        <Plus className="h-4 w-4" />
+        Add question
       </button>
     );
   }

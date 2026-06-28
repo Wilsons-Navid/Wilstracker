@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Send } from "lucide-react";
 import { applyToJobAsCandidate, type ApplyState } from "@/app/actions/apply";
 import type { JobQuestion } from "@/lib/types";
 
@@ -124,8 +125,9 @@ export default function CandidateApplyForm({
       <button
         type="submit"
         disabled={pending}
-        className="self-start rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
+        className="inline-flex items-center gap-1.5 self-start rounded-lg bg-accent px-4 py-2.5 text-sm font-semibold text-accent-fg transition hover:opacity-90 disabled:opacity-60"
       >
+        <Send className="h-4 w-4" />
         {pending ? "Submitting…" : "Submit application"}
       </button>
     </form>
