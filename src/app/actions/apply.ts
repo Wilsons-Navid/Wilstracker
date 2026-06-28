@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireCandidate } from "@/lib/dal";
 import { validateResumeFile, uploadResumeFile } from "@/lib/uploads";
+import { extractResumeTextFromFile } from "@/lib/extract";
 import { sendApplicationReceived } from "@/lib/email";
 
 export type ApplyState = { ok: true } | { error: string } | undefined;
@@ -83,9 +84,13 @@ export async function applyToJobAsCandidate(
   if (resumeFile && !candidate.resume_url) {
     const r = await uploadResumeFile(candidate.id, resumeFile);
     if ("path" in r) {
+      const resumeText = await extractResumeTextFromFile(resumeFile);
       await admin
         .from("candidates")
-        .update({ resume_url: r.path })
+        .update({
+          resume_url: r.path,
+          ...(resumeText ? { resume_text: resumeText } : {}),
+        })
         .eq("id", candidate.id);
     }
   }

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile } from "@/lib/dal";
 import { uploadResumeFile } from "@/lib/uploads";
+import { extractResumeTextFromFile } from "@/lib/extract";
 
 const BUCKET = "resumes";
 
@@ -44,11 +45,18 @@ export async function uploadResume(
   const uploaded = await uploadResumeFile(candidateId, file);
   if ("error" in uploaded) return uploaded;
 
+  // Pull the CV text out now so it's cached for the AI assessment and visible
+  // to staff. Keep any existing text if the file has none (e.g. scanned PDF).
+  const resumeText = await extractResumeTextFromFile(file);
+
   const admin = createAdminClient();
   // Point the candidate at the new file, then clean up any previous one.
   const { error: dbErr } = await admin
     .from("candidates")
-    .update({ resume_url: uploaded.path })
+    .update({
+      resume_url: uploaded.path,
+      ...(resumeText ? { resume_text: resumeText } : {}),
+    })
     .eq("id", candidateId);
   if (dbErr) {
     await admin.storage.from(BUCKET).remove([uploaded.path]); // don't orphan

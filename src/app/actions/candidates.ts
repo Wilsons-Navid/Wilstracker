@@ -8,6 +8,7 @@ import { sendStageChanged } from "@/lib/email";
 import type { CandidateStage } from "@/lib/types";
 import { STAGES } from "@/lib/types";
 import { uploadResumeFile, validateResumeFile } from "@/lib/uploads";
+import { extractResumeTextFromFile } from "@/lib/extract";
 
 export type CandidateFormState = { ok: true } | { error: string } | undefined;
 
@@ -65,10 +66,15 @@ export async function createCandidate(
   if (resumeFile) {
     const r = await uploadResumeFile(candidateId, resumeFile);
     if ("path" in r) {
-      await supabase
-        .from("candidates")
-        .update({ resume_url: r.path })
-        .eq("id", candidateId);
+      const update: { resume_url: string; resume_text?: string } = {
+        resume_url: r.path,
+      };
+      // Auto-extract CV text when the recruiter didn't paste any.
+      if (!resume_text) {
+        const extracted = await extractResumeTextFromFile(resumeFile);
+        if (extracted) update.resume_text = extracted;
+      }
+      await supabase.from("candidates").update(update).eq("id", candidateId);
     }
   }
 
