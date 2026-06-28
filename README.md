@@ -226,6 +226,7 @@ instead of re-running the full schema.
 
 ## Documentation
 
+- [`docs/REVIEW.md`](docs/REVIEW.md) is a quick reviewer's tour: demo logins, a five-minute walkthrough, and where the interesting code lives.
 - [`docs/PLAN.md`](docs/PLAN.md) covers the build plan, data model, and schedule.
 - [`docs/ATS-RESEARCH.md`](docs/ATS-RESEARCH.md) explains the research behind the feature and design choices.
 - [`docs/SETUP.md`](docs/SETUP.md) walks through the environment setup step by step.
