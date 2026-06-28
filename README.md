@@ -242,3 +242,4 @@ instead of re-running the full schema.
 - The AI assessment is advisory. It never auto-rejects a candidate.
 - Deactivating an account blocks it but keeps the data, so the action is reversible. Accounts are not hard-deleted.
 - Email notifications are best-effort through Resend and degrade to a no-op when no key is configured.
+- **Future action — email deliverability.** Without a verified sending domain, Resend only delivers to the account owner's own address. Verifying a domain in Resend and setting `RESEND_FROM` to an address on it would let notifications reach any candidate or customer. The app code is already wired for this; only the domain and `RESEND_FROM` are outstanding.
