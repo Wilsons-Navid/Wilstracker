@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getProfile } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { deleteJob } from "@/app/actions/jobs";
@@ -52,9 +53,15 @@ export default async function JobsPage() {
                 className="flex items-center gap-4 py-3 first:pt-0"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium">{job.title}</div>
+                  <Link
+                    href={`/jobs/${job.id}`}
+                    className="font-medium hover:text-accent hover:underline"
+                  >
+                    {job.title}
+                  </Link>
                   <div className="text-xs text-muted">
                     {job.location ?? "No location"}
+                    {job.status === "closed" && " · Closed"}
                     {isAdmin && (
                       <> · {ownerName.get(job.owner_id) ?? "Unknown"}</>
                     )}
@@ -64,6 +71,12 @@ export default async function JobsPage() {
                   {counts.get(job.id) ?? 0} candidate
                   {(counts.get(job.id) ?? 0) === 1 ? "" : "s"}
                 </span>
+                <Link
+                  href={`/jobs/${job.id}`}
+                  className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:bg-background hover:text-foreground"
+                >
+                  Manage
+                </Link>
                 <form action={deleteJob.bind(null, job.id)}>
                   <button
                     className="rounded-md border border-border px-2.5 py-1 text-xs text-muted hover:bg-red-50 hover:text-red-600"

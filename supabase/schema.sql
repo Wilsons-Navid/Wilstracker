@@ -97,12 +97,37 @@ create table if not exists public.cv_assessments (
   created_at     timestamptz not null default now()
 );
 
+-- Per-job application questions and the answers candidates give. See
+-- migration 0005_job_questions.sql for the full rationale.
+create table if not exists public.job_questions (
+  id         uuid primary key default gen_random_uuid(),
+  job_id     uuid not null references public.jobs (id) on delete cascade,
+  prompt     text not null,
+  kind       text not null default 'text' check (kind in ('text', 'choice')),
+  options    jsonb not null default '[]'::jsonb,   -- string[] used when kind = 'choice'
+  position   int not null default 0,
+  required   boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.application_answers (
+  id             uuid primary key default gen_random_uuid(),
+  application_id uuid not null references public.applications (id) on delete cascade,
+  question_id    uuid not null references public.job_questions (id) on delete cascade,
+  answer         text,
+  created_at     timestamptz not null default now(),
+  unique (application_id, question_id)
+);
+
 -- Helpful indexes for policy/filter columns.
 create index if not exists idx_jobs_owner          on public.jobs (owner_id);
 create index if not exists idx_candidates_auth     on public.candidates (auth_user_id);
 create index if not exists idx_applications_owner  on public.applications (owner_id);
 create index if not exists idx_applications_cand   on public.applications (candidate_id);
 create index if not exists idx_applications_job    on public.applications (job_id);
+create index if not exists idx_job_questions_job       on public.job_questions (job_id);
+create index if not exists idx_application_answers_app on public.application_answers (application_id);
+create index if not exists idx_application_answers_q   on public.application_answers (question_id);
 create index if not exists idx_applications_stage  on public.applications (stage);
 create index if not exists idx_stage_history_app   on public.stage_history (application_id);
 create index if not exists idx_cv_application      on public.cv_assessments (application_id);
@@ -219,12 +244,14 @@ create trigger applications_log_stage
 -- ============================================================================
 -- Row Level Security
 -- ============================================================================
-alter table public.profiles       enable row level security;
-alter table public.jobs           enable row level security;
-alter table public.candidates     enable row level security;
-alter table public.applications   enable row level security;
-alter table public.stage_history  enable row level security;
-alter table public.cv_assessments enable row level security;
+alter table public.profiles           enable row level security;
+alter table public.jobs               enable row level security;
+alter table public.candidates         enable row level security;
+alter table public.applications       enable row level security;
+alter table public.stage_history      enable row level security;
+alter table public.cv_assessments     enable row level security;
+alter table public.job_questions      enable row level security;
+alter table public.application_answers enable row level security;
 
 -- ---------- profiles --------------------------------------------------------
 drop policy if exists profiles_select on public.profiles;
@@ -362,5 +389,63 @@ create policy cv_delete on public.cv_assessments
     exists (
       select 1 from public.applications a
       where a.id = application_id and (a.owner_id = auth.uid() or public.is_admin())
+    )
+  );
+
+-- ---------- job_questions (staff manage their own job's questions) ----------
+drop policy if exists job_questions_select on public.job_questions;
+create policy job_questions_select on public.job_questions
+  for select using (
+    exists (
+      select 1 from public.jobs j
+      where j.id = job_id and (j.owner_id = auth.uid() or public.is_admin())
+    )
+  );
+
+drop policy if exists job_questions_insert on public.job_questions;
+create policy job_questions_insert on public.job_questions
+  for insert with check (
+    exists (
+      select 1 from public.jobs j
+      where j.id = job_id and (j.owner_id = auth.uid() or public.is_admin())
+    )
+  );
+
+drop policy if exists job_questions_update on public.job_questions;
+create policy job_questions_update on public.job_questions
+  for update using (
+    exists (
+      select 1 from public.jobs j
+      where j.id = job_id and (j.owner_id = auth.uid() or public.is_admin())
+    )
+  ) with check (
+    exists (
+      select 1 from public.jobs j
+      where j.id = job_id and (j.owner_id = auth.uid() or public.is_admin())
+    )
+  );
+
+drop policy if exists job_questions_delete on public.job_questions;
+create policy job_questions_delete on public.job_questions
+  for delete using (
+    exists (
+      select 1 from public.jobs j
+      where j.id = job_id and (j.owner_id = auth.uid() or public.is_admin())
+    )
+  );
+
+-- ---------- application_answers (read by job owner/admin or owning candidate) --
+-- Inserted through the service-role client during apply, so no insert policy.
+drop policy if exists application_answers_select on public.application_answers;
+create policy application_answers_select on public.application_answers
+  for select using (
+    exists (
+      select 1 from public.applications a
+      where a.id = application_id
+        and (
+          a.owner_id = auth.uid()
+          or public.is_admin()
+          or public.is_my_application(a.candidate_id)
+        )
     )
   );

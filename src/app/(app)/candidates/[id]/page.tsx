@@ -40,6 +40,16 @@ export default async function CandidateDetailPage({
     .limit(1)
     .maybeSingle();
 
+  // Answers to any extra questions on the job, with their prompts.
+  const { data: answerData } = await supabase
+    .from("application_answers")
+    .select("id, answer, question:job_questions(prompt)")
+    .eq("application_id", id);
+  const answers =
+    (answerData as
+      | { id: string; answer: string | null; question: { prompt: string } | null }[]
+      | null) ?? [];
+
   return (
     <div className="mx-auto max-w-3xl">
       <div className="mb-5 flex items-start justify-between gap-4">
@@ -93,6 +103,25 @@ export default async function CandidateDetailPage({
           hasFile={!!c.resume_url}
           signedUrl={resumeSignedUrl}
         />
+
+        {answers.length > 0 && (
+          <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+            <h2 className="mb-4 text-base font-semibold">Application answers</h2>
+            <dl className="flex flex-col gap-4">
+              {answers.map((a) => (
+                <div key={a.id}>
+                  <dt className="text-sm font-medium">
+                    {a.question?.prompt ?? "Question"}
+                  </dt>
+                  <dd className="mt-0.5 whitespace-pre-wrap text-sm text-muted">
+                    {a.answer || "—"}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        )}
+
         <CandidateEditForm candidate={c} application={app} />
       </div>
     </div>

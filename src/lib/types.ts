@@ -103,6 +103,29 @@ export interface StageHistory {
   moved_at: string;
 }
 
+export type QuestionKind = "text" | "choice";
+
+// An extra question a job owner attaches to a job's application form.
+export interface JobQuestion {
+  id: string;
+  job_id: string;
+  prompt: string;
+  kind: QuestionKind;
+  options: string[]; // used when kind === "choice"
+  position: number;
+  required: boolean;
+  created_at: string;
+}
+
+// One applicant's answer to a job question, scoped to their application.
+export interface ApplicationAnswer {
+  id: string;
+  application_id: string;
+  question_id: string;
+  answer: string | null;
+  created_at: string;
+}
+
 export interface CvAssessment {
   id: string;
   application_id: string;

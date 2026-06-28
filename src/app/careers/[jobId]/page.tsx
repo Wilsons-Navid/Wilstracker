@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProfile, getCandidate } from "@/lib/dal";
 import CandidateApplyForm from "@/components/careers/candidate-apply-form";
-import type { Job } from "@/lib/types";
+import ShareJob from "@/components/jobs/share-job";
+import { getOrigin } from "@/lib/site";
+import type { Job, JobQuestion } from "@/lib/types";
 
 export default async function CareerJobPage({
   params,
@@ -20,6 +22,13 @@ export default async function CareerJobPage({
     .single();
   if (!data) notFound();
   const job = data as Job;
+
+  const { data: questionData } = await admin
+    .from("job_questions")
+    .select("*")
+    .eq("job_id", job.id)
+    .order("position", { ascending: true });
+  const questions = (questionData as JobQuestion[]) ?? [];
 
   const profile = await getProfile();
   const next = `/careers/${job.id}`;
@@ -45,8 +54,12 @@ export default async function CareerJobPage({
 
       <section className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
         <h2 className="mb-4 text-base font-semibold">Apply for this role</h2>
-        {await renderApplySection(job, profile, next)}
+        {await renderApplySection(job, profile, next, questions)}
       </section>
+
+      <div className="mt-6">
+        <ShareJob url={`${await getOrigin()}/careers/${job.id}`} title={job.title} />
+      </div>
     </main>
   );
 }
@@ -55,6 +68,7 @@ async function renderApplySection(
   job: Job,
   profile: { role: string } | null,
   next: string,
+  questions: JobQuestion[],
 ) {
   // Signed-out visitor: send them to sign in / sign up, then back to this job.
   if (!profile) {
@@ -107,6 +121,7 @@ async function renderApplySection(
       fullName={candidate.full_name}
       email={candidate.email}
       hasResume={!!candidate.resume_url}
+      questions={questions}
     />
   );
 }

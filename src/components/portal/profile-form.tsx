@@ -21,17 +21,33 @@ export default function ProfileForm({ candidate }: { candidate: Candidate }) {
       action={action}
       className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm"
     >
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="full_name" className="text-sm font-medium">
-          Full name
-        </label>
-        <input
-          id="full_name"
-          name="full_name"
-          required
-          defaultValue={candidate.full_name}
-          className={inputCls}
-        />
+      <h2 className="text-base font-semibold">Your details</h2>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="full_name" className="text-sm font-medium">
+            Full name
+          </label>
+          <input
+            id="full_name"
+            name="full_name"
+            required
+            defaultValue={candidate.full_name}
+            className={inputCls}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="email" className="text-sm font-medium">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            defaultValue={candidate.email ?? ""}
+            className={inputCls}
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -97,22 +113,6 @@ export default function ProfileForm({ candidate }: { candidate: Candidate }) {
             className={inputCls}
           />
         </div>
-      </div>
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="resume_file" className="text-sm font-medium">
-          Résumé{" "}
-          <span className="font-normal text-muted">
-            {candidate.resume_url ? "(replace current file)" : "(PDF, DOC, or DOCX)"}
-          </span>
-        </label>
-        <input
-          id="resume_file"
-          name="resume_file"
-          type="file"
-          accept=".pdf,.doc,.docx"
-          className="text-sm"
-        />
       </div>
 
       {state && "error" in state && (

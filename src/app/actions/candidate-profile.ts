@@ -45,6 +45,7 @@ export async function updateCandidateProfile(
     .from("candidates")
     .update({
       full_name,
+      email: String(formData.get("email") ?? "").trim() || null,
       phone: String(formData.get("phone") ?? "").trim() || null,
       linkedin_url: String(formData.get("linkedin_url") ?? "").trim() || null,
       portfolio_url: String(formData.get("portfolio_url") ?? "").trim() || null,

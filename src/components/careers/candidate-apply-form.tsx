@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { applyToJobAsCandidate, type ApplyState } from "@/app/actions/apply";
+import type { JobQuestion } from "@/lib/types";
 
 const inputCls =
   "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20";
@@ -11,11 +12,13 @@ export default function CandidateApplyForm({
   fullName,
   email,
   hasResume,
+  questions,
 }: {
   jobId: string;
   fullName: string;
   email: string | null;
   hasResume: boolean;
+  questions: JobQuestion[];
 }) {
   const [state, action, pending] = useActionState<ApplyState, FormData>(
     applyToJobAsCandidate,
@@ -73,6 +76,44 @@ export default function CandidateApplyForm({
           placeholder="Tell us why you're a fit for this role."
         />
       </div>
+
+      {questions.map((q) => (
+        <div key={q.id} className="flex flex-col gap-1.5">
+          <label htmlFor={`answer_${q.id}`} className="text-sm font-medium">
+            {q.prompt}{" "}
+            {q.required ? (
+              <span className="text-red-600">*</span>
+            ) : (
+              <span className="font-normal text-muted">(optional)</span>
+            )}
+          </label>
+
+          {q.kind === "choice" ? (
+            <div className="flex flex-col gap-1.5">
+              {q.options.map((opt) => (
+                <label key={opt} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name={`answer_${q.id}`}
+                    value={opt}
+                    required={q.required}
+                    className="h-4 w-4 border-border"
+                  />
+                  {opt}
+                </label>
+              ))}
+            </div>
+          ) : (
+            <textarea
+              id={`answer_${q.id}`}
+              name={`answer_${q.id}`}
+              rows={3}
+              required={q.required}
+              className={inputCls}
+            />
+          )}
+        </div>
+      ))}
 
       {state && "error" in state && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">

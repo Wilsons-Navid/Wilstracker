@@ -60,6 +60,24 @@ export async function applyToJobAsCandidate(
     .maybeSingle();
   if (dupe) return { error: "You have already applied to this job." };
 
+  // Extra questions the job owner attached. Read answers from the form and
+  // enforce the required ones before creating anything.
+  const { data: questions } = await admin
+    .from("job_questions")
+    .select("id, prompt, required")
+    .eq("job_id", jobId)
+    .order("position", { ascending: true });
+  const answers: { question_id: string; answer: string }[] = [];
+  for (const q of (questions as
+    | { id: string; prompt: string; required: boolean }[]
+    | null) ?? []) {
+    const value = String(formData.get(`answer_${q.id}`) ?? "").trim();
+    if (q.required && !value) {
+      return { error: `Please answer: "${q.prompt}".` };
+    }
+    if (value) answers.push({ question_id: q.id, answer: value });
+  }
+
   // Attach an uploaded résumé only if the candidate has none on file; never
   // clobber a résumé they already manage from their profile.
   if (resumeFile && !candidate.resume_url) {
@@ -72,16 +90,30 @@ export async function applyToJobAsCandidate(
     }
   }
 
-  const { error: appErr } = await admin.from("applications").insert({
-    candidate_id: candidate.id,
-    job_id: jobId,
-    owner_id: (job as { owner_id: string }).owner_id,
-    stage: "applied",
-    status: "active",
-    source: "website",
-    notes: note,
-  });
-  if (appErr) return { error: "Could not submit your application." };
+  const { data: createdApp, error: appErr } = await admin
+    .from("applications")
+    .insert({
+      candidate_id: candidate.id,
+      job_id: jobId,
+      owner_id: (job as { owner_id: string }).owner_id,
+      stage: "applied",
+      status: "active",
+      source: "website",
+      notes: note,
+    })
+    .select("id")
+    .single();
+  if (appErr || !createdApp) {
+    return { error: "Could not submit your application." };
+  }
+
+  // Store the answers to any extra job questions.
+  if (answers.length > 0) {
+    const applicationId = (createdApp as { id: string }).id;
+    await admin
+      .from("application_answers")
+      .insert(answers.map((a) => ({ application_id: applicationId, ...a })));
+  }
 
   // Best-effort confirmation; never blocks the application.
   if (candidate.email) {
