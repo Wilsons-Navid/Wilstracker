@@ -7,7 +7,8 @@ import { useGSAP } from "@gsap/react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   useDraggable,
@@ -65,8 +66,13 @@ export default function Board({
   const [moved, setMoved] = useState<{ id: string; n: number } | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
 
+  // Mouse drags start after a small move; touch needs a short press-hold so a
+  // finger swipe still scrolls the board horizontally instead of grabbing a card.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 8 },
+    }),
   );
 
   // Stagger the cards in once on load.
@@ -168,7 +174,7 @@ export default function Board({
         <select
           value={jobFilter}
           onChange={(e) => setJobFilter(e.target.value)}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent sm:w-auto"
         >
           <option value="all">All jobs</option>
           {jobs.map((j) => (
@@ -183,7 +189,7 @@ export default function Board({
           value={nameFilter}
           onChange={(e) => setNameFilter(e.target.value)}
           placeholder="Filter by candidate name…"
-          className="w-64 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent sm:w-64"
         />
 
         <span className="text-sm text-muted">
