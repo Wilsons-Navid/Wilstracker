@@ -8,6 +8,7 @@ import {
   setAccountActive,
 } from "@/app/actions/admin";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import Avatar from "@/components/ui/avatar";
 import type { Profile, UserRole } from "@/lib/types";
 
 const inputCls =
@@ -167,8 +168,13 @@ export default function AccountRow({
   }
 
   return (
-    <tr className="border-b border-border/60">
-      <td className="py-2.5 font-medium">{account.full_name ?? "—"}</td>
+    <tr className="border-b border-border/60 transition hover:bg-background/40">
+      <td className="py-2.5">
+        <div className="flex items-center gap-2.5">
+          <Avatar name={account.full_name ?? "?"} photoUrl={null} size="sm" />
+          <span className="font-medium">{account.full_name ?? "—"}</span>
+        </div>
+      </td>
       <td className="py-2.5 text-muted">{initialEmail}</td>
       <td className="py-2.5">
         <span
@@ -183,12 +189,17 @@ export default function AccountRow({
       </td>
       <td className="py-2.5">
         <span
-          className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+          className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
             account.active
               ? "bg-emerald-50 text-emerald-700"
               : "bg-rose-50 text-rose-700"
           }`}
         >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${
+              account.active ? "bg-emerald-500" : "bg-rose-500"
+            }`}
+          />
           {account.active ? "Active" : "Deactivated"}
         </span>
       </td>

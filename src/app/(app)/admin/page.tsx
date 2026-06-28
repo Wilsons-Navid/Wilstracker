@@ -1,3 +1,4 @@
+import { Users, Shield, Briefcase, Ban } from "lucide-react";
 import { requireAdmin } from "@/lib/dal";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -21,13 +22,51 @@ export default async function AdminPage() {
 
   const accounts = (profiles as Profile[]) ?? [];
 
+  const adminsN = accounts.filter((a) => a.role === "admin").length;
+  const customersN = accounts.filter((a) => a.role === "customer").length;
+  const deactivatedN = accounts.filter((a) => !a.active).length;
+  const stats = [
+    { label: "Total accounts", value: accounts.length, Icon: Users, alert: false },
+    { label: "Admins", value: adminsN, Icon: Shield, alert: false },
+    { label: "Customers", value: customersN, Icon: Briefcase, alert: false },
+    { label: "Deactivated", value: deactivatedN, Icon: Ban, alert: deactivatedN > 0 },
+  ];
+
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
-      <div>
-        <CreateAccountForm />
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map(({ label, value, Icon, alert }) => (
+          <div
+            key={label}
+            className={`rounded-2xl border p-4 shadow-sm ${
+              alert ? "border-rose-200 bg-rose-50" : "border-border bg-surface"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted">
+                {label}
+              </span>
+              <Icon
+                className={`h-4 w-4 ${alert ? "text-rose-500" : "text-muted"}`}
+              />
+            </div>
+            <div
+              className={`mt-2 text-2xl font-semibold ${
+                alert ? "text-rose-700" : "text-foreground"
+              }`}
+            >
+              {value}
+            </div>
+          </div>
+        ))}
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[380px_1fr]">
+        <div>
+          <CreateAccountForm />
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
         <h2 className="mb-4 text-base font-semibold">
           Accounts{" "}
           <span className="text-sm font-normal text-muted">
@@ -56,6 +95,7 @@ export default async function AdminPage() {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       </div>
     </div>
