@@ -20,6 +20,10 @@ applicant against the job they applied for.
 
 Live: [wilstracker.vercel.app](https://wilstracker.vercel.app)
 
+<p align="center">
+  <img src="docs/board.png" alt="WilsTracker recruiter pipeline board" width="900" />
+</p>
+
 It was built as a one-week coding test, with the goal of getting a first
 customer live quickly on a clean, well-documented codebase, then extended with a
 full candidate experience, richer recruiter tools, and a layout that works just
