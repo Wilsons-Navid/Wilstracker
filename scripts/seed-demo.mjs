@@ -75,9 +75,9 @@ async function fixProfile(id, full_name, role) {
 }
 
 async function main() {
-  // 1) Admin
+  // 1) Admin (neutral demo identity — this seeds YOUR local database only)
   const adminId = await ensureUser({
-    email: "wadotiwawil@gmail.com",
+    email: "admin@example.com",
     password: "tracker123",
     full_name: "Wilsons (Admin)",
     role: "admin",
@@ -177,7 +177,7 @@ async function main() {
   console.log(`✓ inserted ${cand.length} candidates`);
 
   console.log("\nDone. Logins:");
-  console.log("  ADMIN     wadotiwawil@gmail.com / tracker123");
+  console.log("  ADMIN     admin@example.com / tracker123");
   console.log("  CUSTOMER  acme.recruiter@example.com / demo12345");
   console.log("  CUSTOMER  globex.recruiter@example.com / demo12345");
 }

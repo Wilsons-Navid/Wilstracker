@@ -48,13 +48,17 @@ node scripts/seed-demo.mjs
 ```
 This creates a demo admin, two demo customers, and sample jobs and candidates so
 the board has something in it. Re-running is safe; it refreshes the demo jobs and
-candidates. Demo logins:
+candidates. These log into the database **you** just seeded, so they are local to
+your own instance:
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `wadotiwawil@gmail.com` | `tracker123` |
+| Admin | `admin@example.com` | `tracker123` |
 | Customer | `acme.recruiter@example.com` | `demo12345` |
 | Customer | `globex.recruiter@example.com` | `demo12345` |
+
+> The hosted demo at wilstracker.vercel.app uses its own separate admin
+> credentials, shared privately rather than committed here.
 
 **Alternative — bootstrap an admin by hand** (if you'd rather start with an empty
 database): create a user in Supabase **Authentication → Users → Add user**
