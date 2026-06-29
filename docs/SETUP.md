@@ -77,6 +77,13 @@ npm run dev
 Open http://localhost:3000 and log in with the demo admin from step 7 (or your own
 account from the alternative).
 
+> **Testing the candidate side locally.** The seed gives you admin and customer
+> logins. To sign up as a candidate and use the portal, either turn off email
+> confirmation in Supabase (**Authentication → Providers → Email**, untick
+> "Confirm email") or, after signing up, confirm the user by hand in
+> **Authentication → Users**. The hosted demo already has a candidate login if you
+> just want to see the portal.
+
 ---
 
 ## Deploying to Vercel (later)
