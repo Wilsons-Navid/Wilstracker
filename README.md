@@ -9,6 +9,7 @@
   <img src="https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" />
   <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
   <img src="https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white" alt="Anthropic Claude" />
+  <a href="https://github.com/Wilsons-Navid/Wilstracker/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Wilsons-Navid/Wilstracker/ci.yml?branch=master&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI" /></a>
 </p>
 
 WilsTracker is a lightweight applicant tracking system (ATS). Admins create
