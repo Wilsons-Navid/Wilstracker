@@ -52,3 +52,4 @@ WilsTracker-Video-Script.docx
 
 # but DO track the example (placeholders only, no secrets)
 !.env.local.example
+WilsTracker-Submission-Email.docx
