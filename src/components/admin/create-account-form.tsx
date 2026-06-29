@@ -72,6 +72,31 @@ export default function CreateAccountForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
+        <label htmlFor="location" className="text-sm font-medium">
+          Location <span className="font-normal text-muted">(optional)</span>
+        </label>
+        <input
+          id="location"
+          name="location"
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          placeholder="Lagos, Nigeria"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="description" className="text-sm font-medium">
+          Description <span className="font-normal text-muted">(optional)</span>
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={3}
+          className="rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          placeholder="What this customer does, who they hire for, notes…"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-sm font-medium">
           Temporary password
         </label>

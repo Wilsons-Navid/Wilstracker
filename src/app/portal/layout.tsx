@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireCandidate } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
 import MobileMenu from "@/components/ui/mobile-menu";
+import Logo from "@/components/ui/logo";
 
 export default async function PortalLayout({
   children,
@@ -21,9 +22,7 @@ export default async function PortalLayout({
       <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4">
           <Link href="/portal" className="flex items-center gap-2 font-semibold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
-              W
-            </span>
+            <Logo mark priority className="h-8 w-8 rounded-lg object-contain" />
             WilsTracker
           </Link>
 

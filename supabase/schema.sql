@@ -27,6 +27,8 @@ create table if not exists public.profiles (
   full_name   text,
   role        public.user_role not null default 'customer',
   active      boolean not null default true,
+  description text,           -- free-text context for a customer account
+  location    text,           -- customer location (admin can filter by it)
   created_by  uuid references public.profiles (id) on delete set null,
   created_at  timestamptz not null default now()
 );
@@ -121,6 +123,7 @@ create table if not exists public.application_answers (
 );
 
 -- Helpful indexes for policy/filter columns.
+create index if not exists idx_profiles_location   on public.profiles (location);
 create index if not exists idx_jobs_owner          on public.jobs (owner_id);
 create index if not exists idx_candidates_auth     on public.candidates (auth_user_id);
 create index if not exists idx_applications_owner  on public.applications (owner_id);

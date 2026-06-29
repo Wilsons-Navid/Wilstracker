@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/ui/logo";
 
 /**
  * Lightweight top bar for the public-facing pages (landing + careers). Kept
@@ -9,9 +10,7 @@ export default function PublicHeader() {
     <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:gap-6">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
-            W
-          </span>
+          <Logo mark priority className="h-8 w-8 rounded-lg object-contain" />
           WilsTracker
         </Link>
 

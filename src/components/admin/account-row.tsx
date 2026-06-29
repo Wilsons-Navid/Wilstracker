@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, Ban, RotateCcw } from "lucide-react";
+import { Pencil, Ban, RotateCcw, Eye } from "lucide-react";
 import {
   updateAccount,
   setAccountActive,
@@ -30,11 +31,14 @@ export default function AccountRow({
   const [fullName, setFullName] = useState(account.full_name ?? "");
   const [email, setEmail] = useState(initialEmail);
   const [role, setRole] = useState<UserRole>(account.role);
+  const [location, setLocation] = useState(account.location ?? "");
+  const [description, setDescription] = useState(account.description ?? "");
   const [dialog, setDialog] = useState<Dialog>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
   const isSelf = account.id === currentUserId;
+  const isCandidate = account.role === "candidate";
   const promotingToAdmin = role === "admin" && account.role !== "admin";
 
   function save() {
@@ -44,6 +48,8 @@ export default function AccountRow({
     fd.set("full_name", fullName);
     fd.set("email", email.trim());
     fd.set("role", role);
+    fd.set("location", location.trim());
+    fd.set("description", description.trim());
     if (promotingToAdmin) fd.set("confirm_email", email.trim());
     start(async () => {
       const res = await updateAccount(undefined, fd);
@@ -98,12 +104,48 @@ export default function AccountRow({
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  disabled={isSelf}
+                  disabled={isSelf || isCandidate}
+                  title={
+                    isCandidate
+                      ? "Candidate accounts can't be converted to staff roles"
+                      : undefined
+                  }
                   className={inputCls}
                 >
-                  <option value="customer">customer</option>
-                  <option value="admin">admin</option>
+                  {isCandidate ? (
+                    <option value="candidate">candidate</option>
+                  ) : (
+                    <>
+                      <option value="customer">customer</option>
+                      <option value="admin">admin</option>
+                    </>
+                  )}
                 </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted">
+                  Location
+                </label>
+                <input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Lagos, Nigeria"
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-muted">
+                  Description
+                </label>
+                <input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Customer context / notes"
+                  className={inputCls}
+                />
               </div>
             </div>
 
@@ -129,6 +171,8 @@ export default function AccountRow({
                   setFullName(account.full_name ?? "");
                   setEmail(initialEmail);
                   setRole(account.role);
+                  setLocation(account.location ?? "");
+                  setDescription(account.description ?? "");
                 }}
                 className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface"
               >
@@ -172,7 +216,14 @@ export default function AccountRow({
       <td className="py-2.5">
         <div className="flex items-center gap-2.5">
           <Avatar name={account.full_name ?? "?"} photoUrl={null} size="sm" />
-          <span className="font-medium">{account.full_name ?? "—"}</span>
+          <div className="min-w-0">
+            <span className="font-medium">{account.full_name ?? "—"}</span>
+            {account.location && (
+              <span className="block truncate text-xs text-muted">
+                {account.location}
+              </span>
+            )}
+          </div>
         </div>
       </td>
       <td className="py-2.5 text-muted">{initialEmail}</td>
@@ -181,7 +232,9 @@ export default function AccountRow({
           className={`rounded-full px-2 py-0.5 text-xs font-medium ${
             account.role === "admin"
               ? "bg-accent/10 text-accent"
-              : "bg-background text-muted"
+              : account.role === "candidate"
+                ? "bg-violet-50 text-violet-700"
+                : "bg-background text-muted"
           }`}
         >
           {account.role}
@@ -205,6 +258,15 @@ export default function AccountRow({
       </td>
       <td className="py-2.5">
         <div className="flex items-center justify-end gap-3">
+          {isCandidate && (
+            <Link
+              href={`/admin/candidates/${account.id}`}
+              className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-foreground"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              View
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setEditing(true)}

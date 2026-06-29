@@ -27,6 +27,8 @@ export async function createAccount(
   const password = String(formData.get("password") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
   const role = String(formData.get("role") ?? "customer") as UserRole;
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const location = String(formData.get("location") ?? "").trim() || null;
 
   if (!email || !password || !fullName) {
     return { error: "Name, email, and password are all required." };
@@ -58,10 +60,11 @@ export async function createAccount(
     return { error: error.message };
   }
 
-  // Record who created the account (the trigger creates the profile row).
+  // Record who created the account and any customer context (the trigger
+  // creates the profile row; description/location are admin-supplied details).
   await admin
     .from("profiles")
-    .update({ created_by: me.id })
+    .update({ created_by: me.id, description, location })
     .eq("id", data.user.id);
 
   // Let the new user know their account exists (best-effort; never blocks).
@@ -89,6 +92,8 @@ export async function updateAccount(
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const role = String(formData.get("role") ?? "") as UserRole;
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const location = String(formData.get("location") ?? "").trim() || null;
   const confirmEmail = String(formData.get("confirm_email") ?? "")
     .trim()
     .toLowerCase();
@@ -96,7 +101,7 @@ export async function updateAccount(
   if (!userId) return { error: "Missing account." };
   if (!fullName) return { error: "Name is required." };
   if (!email) return { error: "Email is required." };
-  if (role !== "admin" && role !== "customer") {
+  if (role !== "admin" && role !== "customer" && role !== "candidate") {
     return { error: "Invalid role." };
   }
   // An admin can't strip their own admin access (lockout guard).
@@ -113,6 +118,19 @@ export async function updateAccount(
     .single();
   if (!target) return { error: "Account not found." };
   const currentRole = (target as { role: UserRole }).role;
+
+  // Candidates and staff (admin/customer) are different worlds — a candidate has
+  // a linked person row and applications, staff own jobs. Migrating across that
+  // boundary here would leave dangling data, so block the flip and keep edits to
+  // name/email/details only for candidate accounts.
+  if (currentRole === "candidate" || role === "candidate") {
+    if (currentRole !== role) {
+      return {
+        error:
+          "Candidate accounts can't be converted to staff roles (or vice versa).",
+      };
+    }
+  }
 
   const { data: authData } = await admin.auth.admin.getUserById(userId);
   const currentEmail = authData?.user?.email?.toLowerCase() ?? "";
@@ -141,7 +159,7 @@ export async function updateAccount(
   // Name + role live on the profile (is_admin() reads profiles.role).
   const { error: pErr } = await admin
     .from("profiles")
-    .update({ full_name: fullName, role })
+    .update({ full_name: fullName, role, description, location })
     .eq("id", userId);
   if (pErr) return { error: pErr.message };
 

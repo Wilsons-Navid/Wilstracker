@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getProfile } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
 import PublicHeader from "@/components/public-header";
+import Logo from "@/components/ui/logo";
 
 // Careers is a public route, but signed-in users browse it too (the portal links
 // here). Show the public sign-in bar to visitors, and a slim "back to your area"
@@ -29,9 +30,7 @@ export default async function CareersLayout({
       <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-4 sm:gap-6">
           <Link href={home} className="flex items-center gap-2 font-semibold">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-fg">
-              W
-            </span>
+            <Logo mark priority className="h-8 w-8 rounded-lg object-contain" />
             WilsTracker
           </Link>
           <Link

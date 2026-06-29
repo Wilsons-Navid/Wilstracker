@@ -65,7 +65,7 @@ function layout(
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;">
         <tr><td style="padding:22px 28px;border-bottom:1px solid #f0f1f3;">
           <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:30px;height:30px;background:${BRAND};border-radius:8px;color:#fff;font-weight:700;font-size:15px;text-align:center;vertical-align:middle;">W</td>
+            <td style="width:32px;height:32px;vertical-align:middle;"><img src="${APP_URL}/wilstracker-logo.png" width="32" height="32" alt="WilsTracker" style="display:block;border-radius:8px;" /></td>
             <td style="padding-left:10px;font-size:16px;font-weight:600;color:#111827;">WilsTracker</td>
           </tr></table>
         </td></tr>

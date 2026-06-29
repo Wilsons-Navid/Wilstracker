@@ -36,6 +36,8 @@ export interface Profile {
   full_name: string | null;
   role: UserRole;
   active: boolean;
+  description: string | null;
+  location: string | null;
   created_by: string | null;
   created_at: string;
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LoginForm from "@/components/login-form";
+import Logo from "@/components/ui/logo";
 
 export default async function LoginPage({
   searchParams,
@@ -13,13 +14,9 @@ export default async function LoginPage({
     <main className="flex min-h-screen items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <Link
-            href="/"
-            className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-lg font-bold text-accent-fg"
-          >
-            W
+          <Link href="/" className="mx-auto mb-3 block w-fit">
+            <Logo priority className="mx-auto h-auto w-40" />
           </Link>
-          <h1 className="text-xl font-semibold">WilsTracker</h1>
           <p className="mt-1 text-sm text-muted">Sign in to your account</p>
         </div>
 
