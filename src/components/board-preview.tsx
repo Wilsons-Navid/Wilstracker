@@ -3,8 +3,9 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-gsap.registerPlugin(useGSAP);
+gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 // A static, decorative preview of the pipeline board. It mirrors the stage
 // colours used in the real Kanban, and a looping highlight travels across the
@@ -28,6 +29,23 @@ export default function BoardPreview() {
       ) {
         return;
       }
+
+      // Reveal the columns as the preview scrolls into view — the board
+      // assembling itself, so the landing shows the product arriving rather
+      // than appearing fully-formed. Fires once; cleaned up by useGSAP scope.
+      const cols = gsap.utils.toArray<HTMLElement>(".preview-col");
+      gsap.from(cols, {
+        opacity: 0,
+        y: 18,
+        duration: 0.5,
+        stagger: 0.08,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: root.current,
+          start: "top 85%",
+          once: true,
+        },
+      });
 
       const actives = gsap.utils.toArray<HTMLElement>(".preview-active");
       if (!actives.length) return;
@@ -61,7 +79,7 @@ export default function BoardPreview() {
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {PREVIEW_STAGES.map((s) => (
-          <div key={s.label} className="flex flex-col gap-2">
+          <div key={s.label} className="preview-col flex flex-col gap-2">
             <div className="flex items-center gap-1.5 px-0.5">
               <span className={`h-2 w-2 rounded-full ${s.dot}`} />
               <span className="text-xs font-medium">{s.label}</span>
