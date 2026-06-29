@@ -2,6 +2,14 @@
 
 Step-by-step to get the app running locally. Do these in order.
 
+## 0. Clone and install
+```bash
+git clone https://github.com/Wilsons-Navid/Wilstracker.git
+cd Wilstracker
+npm install
+```
+Requires Node 20+.
+
 ## 1. Create a Supabase project (browser)
 1. Go to https://supabase.com → sign in → **New project**.
 2. Name it `ats-mini`, pick a region close to you, set a strong database password (save it).
@@ -27,23 +35,43 @@ Step-by-step to get the app running locally. Do these in order.
 1. In the project root, copy `.env.local.example` to `.env.local`.
 2. Paste the four values from steps 3–4.
 
-## 6. Create the first admin (bootstrap)
-The app only lets admins create accounts — so the very first admin is made by hand.
-1. Supabase **Authentication → Users → Add user → Create new user**.
-   - Enter an email + password you control, tick **Auto Confirm User**.
-2. The `handle_new_user` trigger creates a matching `profiles` row (defaults to `customer`).
-3. Promote it to admin: **SQL Editor → New query**, run (replace the email):
-   ```sql
-   update public.profiles
-   set role = 'admin', full_name = 'Wilsons (Admin)'
-   where id = (select id from auth.users where email = 'you@example.com');
-   ```
+## 6. Create the storage buckets
+Résumé and avatar uploads live in private Supabase Storage buckets. Create them:
+```bash
+node scripts/setup-storage.mjs
+```
+This makes the `resumes` and `avatars` buckets. Skip it and uploads will fail.
 
-## 7. Run the app
+## 7. Seed the admin and demo data
+```bash
+node scripts/seed-demo.mjs
+```
+This creates a demo admin, two demo customers, and sample jobs and candidates so
+the board has something in it. Re-running is safe; it refreshes the demo jobs and
+candidates. Demo logins:
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `wadotiwawil@gmail.com` | `tracker123` |
+| Customer | `acme.recruiter@example.com` | `demo12345` |
+| Customer | `globex.recruiter@example.com` | `demo12345` |
+
+**Alternative — bootstrap an admin by hand** (if you'd rather start with an empty
+database): create a user in Supabase **Authentication → Users → Add user**
+(enter an email and password, tick **Auto Confirm User**). The `handle_new_user`
+trigger creates a matching `profiles` row, defaulting to `customer`. Promote it:
+```sql
+update public.profiles
+set role = 'admin', full_name = 'Wilsons (Admin)'
+where id = (select id from auth.users where email = 'you@example.com');
+```
+
+## 8. Run the app
 ```bash
 npm run dev
 ```
-Open http://localhost:3000 and log in with the admin credentials from step 6.
+Open http://localhost:3000 and log in with the demo admin from step 7 (or your own
+account from the alternative).
 
 ---
 
