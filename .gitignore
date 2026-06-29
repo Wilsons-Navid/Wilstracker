@@ -46,8 +46,9 @@ next-env.d.ts
 # graphify knowledge-graph output
 /graphify-out/
 
-# demo credentials doc — contains passwords, never commit (share out of band)
+# personal working docs — contain demo logins, keep out of the repo
 WilsTracker-Demo-Credentials.docx
+WilsTracker-Video-Script.docx
 
 # but DO track the example (placeholders only, no secrets)
 !.env.local.example
