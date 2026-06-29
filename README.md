@@ -108,6 +108,19 @@ Built on top of both sides:
   <img src="docs/assessment.png" alt="AI CV assessment: score breakdown, strengths, and gaps" width="900" />
 </p>
 
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/admin.png" alt="Admin panel: account management" /><br/>
+      <sub>Admin: create accounts with location and description, filter by role and location, reset passwords.</sub>
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/jobs.png" alt="Jobs management" /><br/>
+      <sub>Jobs: post and manage roles for any customer, each with its own pipeline.</sub>
+    </td>
+  </tr>
+</table>
+
 ## Tech stack
 
 | Layer | Choice |
