@@ -104,6 +104,10 @@ Built on top of both sides:
 - **A decoupled data model:** the person and the pipeline entry are separate, so one person can apply to several jobs, and every stage change is recorded in an audit trail.
 - **Works on mobile:** the board, forms, and navigation adapt down to phone screens: the top nav folds into a menu, and the Kanban scrolls with a swipe while a press-and-hold moves a card.
 
+<p align="center">
+  <img src="docs/assessment.png" alt="AI CV assessment: score breakdown, strengths, and gaps" width="900" />
+</p>
+
 ## Tech stack
 
 | Layer | Choice |
