@@ -15,9 +15,9 @@ export default async function LoginPage({
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <Link href="/" className="mx-auto mb-3 block w-fit">
-            <Logo priority className="mx-auto h-auto w-40" />
+            <Logo />
           </Link>
-          <p className="mt-1 text-sm text-muted">Sign in to your account</p>
+          <p className="mt-4 text-sm text-muted">Sign in to your account</p>
         </div>
 
         {error && (

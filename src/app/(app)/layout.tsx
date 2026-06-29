@@ -26,7 +26,7 @@ export default async function AppLayout({
       <header className="sticky top-0 z-20 border-b border-border bg-surface/80 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4">
           <Link href="/board" className="flex items-center gap-2 font-semibold">
-            <Logo mark priority className="h-8 w-8 rounded-lg object-contain" />
+            <Logo mark className="h-8 w-8" />
             WilsTracker
           </Link>
 

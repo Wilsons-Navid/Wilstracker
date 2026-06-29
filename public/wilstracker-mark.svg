@@ -1,0 +1,10 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="WilsTracker">
+  <defs>
+    <linearGradient id="wtMark" x1="7" y1="35" x2="41" y2="8" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f766e"/>
+      <stop offset="1" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+  <path d="M7 17 L15 35 L24 23 L32 35 L41 8" stroke="url(#wtMark)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="41" cy="8" r="4.5" fill="#2dd4bf"/>
+</svg>
