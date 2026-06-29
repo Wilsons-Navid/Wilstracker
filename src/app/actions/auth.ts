@@ -108,6 +108,72 @@ export async function signUpCandidate(
   redirect(next ?? "/portal");
 }
 
+export type ResetRequestState = { ok: true } | { error: string } | undefined;
+
+// Public "forgot password" — sends a recovery email. Works for any account
+// (customer or candidate). Always reports success so the form never reveals
+// whether an email is registered.
+export async function requestPasswordReset(
+  _prev: ResetRequestState,
+  formData: FormData,
+): Promise<ResetRequestState> {
+  const email = String(formData.get("email") ?? "")
+    .trim()
+    .toLowerCase();
+  if (!email) return { error: "Enter your email address." };
+
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const origin = h.get("origin") ?? (host ? `${proto}://${host}` : "");
+
+  const supabase = await createClient();
+  // The recovery link returns through /auth/callback (which exchanges the code
+  // for a session) and is then forwarded to /reset-password to set a new one.
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: origin
+      ? `${origin}/auth/callback?next=${encodeURIComponent("/reset-password")}`
+      : undefined,
+  });
+  return { ok: true };
+}
+
+// Sets a new password for the user landed here via a recovery link (the callback
+// established a recovery session first).
+export async function updatePassword(
+  _prev: AuthState,
+  formData: FormData,
+): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+  if (password !== confirm) {
+    return { error: "Passwords do not match." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Your reset link is invalid or has expired. Request a new one." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  redirect(
+    (profile as { role: string } | null)?.role === "candidate" ? "/portal" : "/board",
+  );
+}
+
 export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();

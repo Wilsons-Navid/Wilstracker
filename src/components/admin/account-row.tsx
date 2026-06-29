@@ -3,19 +3,20 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Pencil, Ban, RotateCcw, Eye } from "lucide-react";
+import { Pencil, Ban, RotateCcw, Eye, KeyRound } from "lucide-react";
 import {
   updateAccount,
   setAccountActive,
 } from "@/app/actions/admin";
 import ConfirmDialog from "@/components/ui/confirm-dialog";
+import ResetPasswordDialog from "@/components/admin/reset-password-dialog";
 import Avatar from "@/components/ui/avatar";
 import type { Profile, UserRole } from "@/lib/types";
 
 const inputCls =
   "rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/20";
 
-type Dialog = "save" | "deactivate" | "reactivate" | null;
+type Dialog = "save" | "deactivate" | "reactivate" | "reset" | null;
 
 export default function AccountRow({
   account,
@@ -275,6 +276,14 @@ export default function AccountRow({
             <Pencil className="h-3.5 w-3.5" />
             Edit
           </button>
+          <button
+            type="button"
+            onClick={() => setDialog("reset")}
+            className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-foreground"
+          >
+            <KeyRound className="h-3.5 w-3.5" />
+            Reset
+          </button>
           {account.active ? (
             <button
               type="button"
@@ -298,6 +307,13 @@ export default function AccountRow({
           )}
         </div>
 
+        {dialog === "reset" && (
+          <ResetPasswordDialog
+            userId={account.id}
+            name={account.full_name ?? initialEmail}
+            onClose={() => setDialog(null)}
+          />
+        )}
         {dialog === "deactivate" && (
           <ConfirmDialog
             title="Deactivate account"

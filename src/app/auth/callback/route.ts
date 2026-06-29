@@ -33,6 +33,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // An internal `next` path (e.g. the password-recovery flow points here so the
+  // code is exchanged before the user sets a new password). Only same-site paths
+  // are honored, never an absolute or protocol-relative URL.
+  const next = searchParams.get("next");
+  if (next && next.startsWith("/") && !next.startsWith("//")) {
+    return NextResponse.redirect(`${origin}${next}`);
+  }
+
   // Session is set — decide where to land based on the profile role.
   const {
     data: { user },

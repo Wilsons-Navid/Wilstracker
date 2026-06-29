@@ -167,6 +167,31 @@ export async function updateAccount(
   return { ok: true, message: "Account updated." };
 }
 
+// Admin sets a new password for any account (customer or candidate) directly,
+// without needing the recovery-email round trip. The admin then shares it with
+// the account holder out of band.
+export async function setAccountPassword(
+  userId: string,
+  newPassword: string,
+): Promise<{ ok?: true; error?: string }> {
+  const me = await getProfile();
+  if (!me || me.role !== "admin") {
+    return { error: "Only admins can manage accounts." };
+  }
+  if (!userId) return { error: "Missing account." };
+  if (!newPassword || newPassword.length < 8) {
+    return { error: "Password must be at least 8 characters." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(userId, {
+    password: newPassword,
+  });
+  if (error) return { error: error.message };
+
+  return { ok: true };
+}
+
 export async function setAccountActive(
   userId: string,
   active: boolean,
