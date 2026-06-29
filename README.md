@@ -205,10 +205,14 @@ docs/                  # PLAN, research, setup
 
 ## Getting started
 
-See [`docs/SETUP.md`](docs/SETUP.md) for the full walkthrough. The short version:
+You'll need **Node 20+**, a free [Supabase](https://supabase.com) project, and an
+Anthropic API key. See [`docs/SETUP.md`](docs/SETUP.md) for the full walkthrough.
+The short version:
 
 ```bash
-# 1. Install
+# 1. Clone and install
+git clone https://github.com/Wilsons-Navid/Wilstracker.git
+cd Wilstracker
 npm install
 
 # 2. Configure env
@@ -218,12 +222,15 @@ cp .env.local.example .env.local   # then fill in your Supabase and Anthropic ke
 #    Run supabase/schema.sql in the Supabase SQL editor, then:
 node scripts/setup-storage.mjs     # create the resumes and avatars buckets
 
-# 4. Create the first admin (see SETUP step 6), then run:
+# 4. Seed the admin and demo data, then run
+node scripts/seed-demo.mjs         # creates the admin, customers, and sample jobs
 npm run dev                        # http://localhost:3000
 ```
 
-For an existing database, apply the files in `supabase/migrations/` in order
-instead of re-running the full schema.
+The seed script creates a demo admin and sample data; see
+[`docs/SETUP.md`](docs/SETUP.md) for the demo login. For an existing database,
+apply the files in `supabase/migrations/` in order instead of re-running the full
+schema.
 
 ## Environment variables
 
