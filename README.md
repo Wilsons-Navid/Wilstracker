@@ -61,7 +61,7 @@ apply to roles and follow their own applications.
 
 Where the project started:
 
-- Admins provision every staff login, both recruiter and admin accounts. There is no public sign-up for staff.
+- Admins provision every recruiter and admin login. There is no public sign-up for them.
 - Recruiters sign in to their own workspace.
 - They post the roles they are hiring for.
 - They add candidates by hand and capture the essentials, such as a name, an email, and a LinkedIn link.
@@ -86,17 +86,18 @@ The candidate side was added on top of the brief:
 
 Built on top of both sides:
 
-- AI CV assessment. Claude scores an application against the job and returns a structured result with a numeric score, a breakdown, strengths, gaps, and a recommendation. It scores the résumé's extracted text rather than re-sending the file each time, which keeps it fast and cheap. The score also rides along on the Kanban card, colour-coded, so a recruiter can scan a column and see who to look at first. It is advisory only and never auto-rejects anyone.
-- Automatic CV text extraction. When a résumé is uploaded its text is pulled out on the server, `unpdf` for PDF and `mammoth` for DOCX, and stored next to the file. The candidate page shows both the original document and the extracted text, which staff can edit if a parse comes out rough.
-- Editable jobs and a manage page. Every job has its own manage page where the owner, or an admin, edits the description, curates the custom questions, and shares the role.
-- Custom application questions. A job can carry free-text and multiple-choice questions. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
-- Job sharing. An open role can be shared straight to X, LinkedIn, Facebook, WhatsApp, Telegram, or email, each with its own branded button.
-- Admin account management. Admins create accounts with an optional description and location, then edit a customer's name, email, role, description, and location, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves. The accounts list filters live by a free-text search across name, email, and description, by role, and by location.
-- Candidate accounts in the admin panel. Candidates who self-register show up alongside staff in the accounts list, counted and badged separately. An admin can open any candidate account to see their profile, contact details, and every application they have filed with its stage, mirroring what the candidate sees in their own portal. Candidate and staff roles can't be flipped into each other, so a person's applications or owned jobs are never orphaned.
-- Consistent branding. The WilsTracker logo carries across the app: the staff, portal, and public navigation, the login and sign-up screens, the browser favicon, and the header of every transactional email.
-- Résumé and avatar storage. Files live privately in Supabase Storage and are served through short-lived signed URLs that check ownership first. Candidates manage their own photo; recruiters can see it but not change it.
-- A decoupled data model. The person and the pipeline entry are separate, so one person can apply to several jobs, and every stage change is recorded in an audit trail.
-- Works on mobile. The board, forms, and navigation adapt down to phone screens: the top nav folds into a menu, and the Kanban scrolls with a swipe while a press-and-hold moves a card.
+- **AI CV assessment:** Claude scores an application against the job and returns a structured result with a numeric score, a breakdown, strengths, gaps, and a recommendation. It scores the résumé's extracted text rather than re-sending the file each time, which keeps it fast and cheap. The score also rides along on the Kanban card, colour-coded, so a recruiter can scan a column and see who to look at first. It is advisory only and never auto-rejects anyone.
+- **Automatic CV text extraction:** when a résumé is uploaded its text is pulled out on the server, `unpdf` for PDF and `mammoth` for DOCX, and stored next to the file. The candidate page shows both the original document and the extracted text, which a recruiter can edit if a parse comes out rough.
+- **Editable jobs and a manage page:** every job has its own manage page where the owner, or an admin, edits the description, curates the custom questions, and shares the role.
+- **Custom application questions:** a job can carry free-text and multiple-choice questions. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
+- **Job sharing:** an open role can be shared straight to X, LinkedIn, Facebook, WhatsApp, Telegram, or email, each with its own branded button.
+- **Admin account management:** admins create and edit accounts, including an optional description and location for a customer, reset a password, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves. The accounts list filters by search, role, and location.
+- **Candidate accounts:** candidates who self-register appear in the same admin list, counted and badged by role. An admin can open a candidate account to see their profile and every application they have filed, mirroring the candidate's own portal view.
+- **Password reset:** a customer or candidate can reset their own password from a "forgot password" link, and an admin can set a new password for any account from the admin panel.
+- **Consistent branding:** the WilsTracker logo runs across the app, the candidate portal, the public pages, the login and sign-up screens, the favicon, and every transactional email.
+- **Résumé and avatar storage:** files live privately in Supabase Storage and are served through short-lived signed URLs that check ownership first. Candidates manage their own photo; recruiters can see it but not change it.
+- **A decoupled data model:** the person and the pipeline entry are separate, so one person can apply to several jobs, and every stage change is recorded in an audit trail.
+- **Works on mobile:** the board, forms, and navigation adapt down to phone screens: the top nav folds into a menu, and the Kanban scrolls with a swipe while a press-and-hold moves a card.
 
 ## Tech stack
 
@@ -115,18 +116,18 @@ Built on top of both sides:
 
 ## Architecture and security
 
-- Roles. Each profile has a role of `admin`, `customer`, or `candidate`, stored on `profiles.role`. The role drives routing: staff land on the board, candidates land on their portal.
-- Roles come from admins, not applicants. A new account's role is read from service-role-only `app_metadata`, never from the values a visitor can set on the public sign-up form, so self-registration can only ever create a candidate.
-- Row Level Security. Every table has RLS. Customers only see rows they own through `owner_id = auth.uid()`. Candidates only see their own person row and their own applications, and can never read assessments, notes, or stage history. Admins pass an `is_admin()` check and can see everything.
-- No policy recursion. The candidate and application policies reference each other, so the cross-table checks run through `SECURITY DEFINER` helper functions (`user_owns_candidate`, `is_my_application`) that bypass RLS and avoid an infinite-recursion error.
-- Three Supabase clients for three trust levels:
+- **Roles:** each profile has a role of `admin`, `customer`, or `candidate`, stored on `profiles.role`. The role drives routing: a customer or admin lands on the board, a candidate lands on their portal.
+- **Roles come from admins, not applicants:** a new account's role is read from service-role-only `app_metadata`, never from the values a visitor can set on the public sign-up form, so self-registration can only ever create a candidate.
+- **Row Level Security:** every table has RLS. Customers only see rows they own through `owner_id = auth.uid()`. Candidates only see their own person row and their own applications, and can never read assessments, notes, or stage history. Admins pass an `is_admin()` check and can see everything.
+- **No policy recursion:** the candidate and application policies reference each other, so the cross-table checks run through `SECURITY DEFINER` helper functions (`user_owns_candidate`, `is_my_application`) that bypass RLS and avoid an infinite-recursion error.
+- **Three Supabase clients for three trust levels:**
   - `lib/supabase/client.ts` is the browser client (anon key) and runs under RLS.
   - `lib/supabase/server.ts` is the server client bound to the user's session and also runs under RLS.
   - `lib/supabase/admin.ts` is the service-role client that bypasses RLS. It imports `server-only`, so the build fails if it is ever pulled into browser code.
-- Authorize, then act. A privileged server action first checks access through the user-scoped client, where RLS makes the decision, and only then uses the service-role client for the storage or write operation. A signed résumé URL is generated from the candidate row the caller is proven to own, never from a path passed in by the caller.
-- Identity from the session, not the form. Applying takes the candidate identity from the signed-in session rather than an email field, so an application cannot be filed against someone else or used to overwrite their profile.
-- Deactivation is enforced everywhere. Disabling an account bans it at the auth layer and makes `getProfile` return null, so the user is signed out and blocked from acting, while the row is kept for a later reactivation rather than deleted.
-- Functions sit next to the data. The serverless functions are pinned to the database's region, so the handful of small queries each request makes don't cross an ocean on the way to Postgres.
+- **Authorize, then act:** a privileged server action first checks access through the user-scoped client, where RLS makes the decision, and only then uses the service-role client for the storage or write operation. A signed résumé URL is generated from the candidate row the caller is proven to own, never from a path passed in by the caller.
+- **Identity from the session, not the form:** applying takes the candidate identity from the signed-in session rather than an email field, so an application cannot be filed against someone else or used to overwrite their profile.
+- **Deactivation is enforced everywhere:** disabling an account bans it at the auth layer and makes `getProfile` return null, so the user is signed out and blocked from acting, while the row is kept for a later reactivation rather than deleted.
+- **Functions sit next to the data:** the serverless functions are pinned to the database's region, so the handful of small queries each request makes don't cross an ocean on the way to Postgres.
 
 ## Data model
 
@@ -150,7 +151,7 @@ the pipeline on its own.
 ```
 src/
   app/
-    (app)/             # staff routes: board, jobs (+ per-job manage page), candidates, admin (+ candidate account view)
+    (app)/             # customer + admin routes: board, jobs (+ per-job manage page), candidates, admin (+ candidate account view)
     portal/            # candidate portal: applications and profile
     careers/           # public careers list, job detail, apply
     auth/callback/     # email confirmation / PKCE code exchange
