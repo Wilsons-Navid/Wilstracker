@@ -91,7 +91,9 @@ Built on top of both sides:
 - Editable jobs and a manage page. Every job has its own manage page where the owner, or an admin, edits the description, curates the custom questions, and shares the role.
 - Custom application questions. A job can carry free-text and multiple-choice questions. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
 - Job sharing. An open role can be shared straight to X, LinkedIn, Facebook, WhatsApp, Telegram, or email, each with its own branded button.
-- Admin account management. Admins edit a customer's name, email, and role, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves.
+- Admin account management. Admins create accounts with an optional description and location, then edit a customer's name, email, role, description, and location, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves. The accounts list filters live by a free-text search across name, email, and description, by role, and by location.
+- Candidate accounts in the admin panel. Candidates who self-register show up alongside staff in the accounts list, counted and badged separately. An admin can open any candidate account to see their profile, contact details, and every application they have filed with its stage, mirroring what the candidate sees in their own portal. Candidate and staff roles can't be flipped into each other, so a person's applications or owned jobs are never orphaned.
+- Consistent branding. The WilsTracker logo carries across the app: the staff, portal, and public navigation, the login and sign-up screens, the browser favicon, and the header of every transactional email.
 - Résumé and avatar storage. Files live privately in Supabase Storage and are served through short-lived signed URLs that check ownership first. Candidates manage their own photo; recruiters can see it but not change it.
 - A decoupled data model. The person and the pipeline entry are separate, so one person can apply to several jobs, and every stage change is recorded in an audit trail.
 - Works on mobile. The board, forms, and navigation adapt down to phone screens: the top nav folds into a menu, and the Kanban scrolls with a swipe while a press-and-hold moves a card.
@@ -134,7 +136,7 @@ the pipeline on its own.
 
 | Table | Key columns | Purpose |
 |---|---|---|
-| `profiles` | `id -> auth.users`, `full_name`, `role`, `active`, `created_by` | identity, role, and whether the login is enabled |
+| `profiles` | `id -> auth.users`, `full_name`, `role`, `active`, `description`, `location`, `created_by` | identity, role, customer details (description, location), and whether the login is enabled |
 | `jobs` | `id`, `owner_id -> profiles`, `title`, `description`, `location`, `status` | postings |
 | `candidates` | `id`, `auth_user_id -> auth.users`, `full_name`, `email`, `phone`, `linkedin_url`, `portfolio_url`, `location`, `headline`, `resume_url`, `resume_text`, `avatar_url` | the person |
 | `applications` | `id`, `candidate_id -> candidates`, `job_id -> jobs`, `owner_id -> profiles`, `stage`, `status`, `source`, `notes`, `applied_at` | one candidate applying to one job |
@@ -148,14 +150,14 @@ the pipeline on its own.
 ```
 src/
   app/
-    (app)/             # staff routes: board, jobs (+ per-job manage page), candidates, admin
+    (app)/             # staff routes: board, jobs (+ per-job manage page), candidates, admin (+ candidate account view)
     portal/            # candidate portal: applications and profile
     careers/           # public careers list, job detail, apply
     auth/callback/     # email confirmation / PKCE code exchange
     login/  signup/    # auth pages
     actions/           # server actions: auth, jobs, job-questions, candidates, apply, ai, resume, avatar, admin, candidate-profile
     page.tsx           # role-aware landing page
-  components/          # board, careers, portal, candidate forms, job tools (edit, questions, share), uploads, auth, ui
+  components/          # board, careers, portal, candidate forms, job tools (edit, questions, share), admin (accounts table, create/edit), uploads, auth, ui (incl. logo)
   lib/
     supabase/
       client.ts        # browser client (anon key)
@@ -170,7 +172,7 @@ src/
   proxy.ts             # session refresh and route guard (Next 16 "middleware")
 supabase/
   schema.sql           # full target schema: tables, RLS, triggers
-  migrations/          # incremental migrations (candidate portal, RLS fixes, secure roles, job questions, account status)
+  migrations/          # incremental migrations (candidate portal, RLS fixes, secure roles, job questions, account status, customer profile fields)
   verify_rls.sql       # RLS assertion matrix
 scripts/
   setup-storage.mjs    # create the Storage buckets
