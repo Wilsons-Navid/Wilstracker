@@ -68,7 +68,7 @@ Where the project started:
 - They post the roles they are hiring for.
 - They add candidates by hand and capture the essentials, such as a name, an email, and a LinkedIn link.
 - Each recruiter's candidates land on one compact Kanban board, grouped by stage across all of that recruiter's jobs.
-- The board narrows by job and by candidate name when the pipeline gets busy.
+- The board narrows by job and by candidate name when the pipeline gets busy, and an admin can also filter it by customer.
 - Admins can do all of this for any recruiter, through the same screens rather than a separate path.
 
 ### The candidate experience
@@ -91,10 +91,11 @@ Built on top of both sides:
 - **AI CV assessment:** Claude scores an application against the job and returns a structured result with a numeric score, a breakdown, strengths, gaps, and a recommendation. It scores the résumé's extracted text rather than re-sending the file each time, which keeps it fast and cheap. The score also rides along on the Kanban card, colour-coded, so a recruiter can scan a column and see who to look at first. It is advisory only and never auto-rejects anyone.
 - **Automatic CV text extraction:** when a résumé is uploaded its text is pulled out on the server, `unpdf` for PDF and `mammoth` for DOCX, and stored next to the file. The candidate page shows both the original document and the extracted text, which a recruiter can edit if a parse comes out rough.
 - **Editable jobs and a manage page:** every job has its own manage page where the owner, or an admin, edits the description, curates the custom questions, and shares the role.
-- **Custom application questions:** a job can carry free-text and multiple-choice questions. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
+- **Custom application questions:** a job can carry free-text and multiple-choice questions, added either while posting the job or later from its manage page. They render on the apply form and the answers surface on the candidate, so the screening criteria live with the role.
 - **Job sharing:** an open role can be shared straight to X, LinkedIn, Facebook, WhatsApp, Telegram, or email, each with its own branded button.
-- **Admin account management:** admins create and edit accounts, including an optional description and location for a customer, reset a password, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves. The accounts list filters by search, role, and location.
-- **Candidate accounts:** candidates who self-register appear in the same admin list, counted and badged by role. An admin can open a candidate account to see their profile and every application they have filed, mirroring the candidate's own portal view.
+- **Admin account management:** admins create and edit accounts, including an optional About/Company note and location for a customer, reset a password, and deactivate or reactivate accounts, all behind confirmation prompts. Promoting someone to admin means retyping their email to confirm, and an admin can neither demote nor deactivate themselves. The accounts list filters by search, role, and location.
+- **Account views:** opening a customer account shows their company profile, the roles they own, and a summary of their pipeline, with a one-click jump to their board filtered to just them. Opening a candidate account shows their profile and every application they have filed, mirroring the candidate's own portal view.
+- **Candidate accounts:** candidates who self-register appear in the same admin list, counted and badged by role.
 - **Password reset:** a customer or candidate can reset their own password from a "forgot password" link, and an admin can set a new password for any account from the admin panel.
 - **Consistent branding:** the WilsTracker logo runs across the app, the candidate portal, the public pages, the login and sign-up screens, the favicon, and every transactional email.
 - **Résumé and avatar storage:** files live privately in Supabase Storage and are served through short-lived signed URLs that check ownership first. Candidates manage their own photo; recruiters can see it but not change it.
@@ -109,7 +110,7 @@ Built on top of both sides:
   <tr>
     <td width="50%" valign="top">
       <img src="docs/admin.png" alt="Admin panel: account management" /><br/>
-      <sub>Admin: create accounts with location and description, filter by role and location, reset passwords.</sub>
+      <sub>Admin: create accounts with an About/Company note and location, filter by role and location, reset passwords.</sub>
     </td>
     <td width="50%" valign="top">
       <img src="docs/jobs.png" alt="Jobs management" /><br/>
@@ -170,7 +171,7 @@ the pipeline on its own.
 ```
 src/
   app/
-    (app)/             # customer + admin routes: board, jobs (+ per-job manage page), candidates, admin (+ candidate account view)
+    (app)/             # customer + admin routes: board, jobs (+ per-job manage page), candidates, admin (+ candidate and customer account views)
     portal/            # candidate portal: applications and profile
     careers/           # public careers list, job detail, apply
     auth/callback/     # email confirmation / PKCE code exchange
