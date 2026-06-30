@@ -41,8 +41,9 @@ export default async function AdminCustomerPage({
     .maybeSingle();
 
   const profile = profileRow as Profile | null;
-  // This page is for staff accounts; candidates have their own dedicated view.
-  if (!profile || profile.role === "candidate") notFound();
+  // This page is for customer accounts only. Candidates have their own view,
+  // and admins don't own jobs so there's nothing meaningful to show.
+  if (!profile || profile.role !== "customer") notFound();
 
   const { data: jobsRaw } = await supabase
     .from("jobs")
@@ -93,14 +94,8 @@ export default async function AdminCustomerPage({
             <h1 className="text-xl font-semibold">
               {profile.full_name ?? "Unnamed customer"}
             </h1>
-            <span
-              className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                profile.role === "admin"
-                  ? "bg-accent/10 text-accent"
-                  : "bg-background text-muted"
-              }`}
-            >
-              {profile.role}
+            <span className="rounded-full bg-background px-2 py-0.5 text-xs font-medium text-muted">
+              customer
             </span>
             <span
               className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${
