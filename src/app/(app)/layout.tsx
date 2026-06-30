@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { LayoutGrid, Briefcase, Shield, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { requireStaff } from "@/lib/dal";
 import { signOut } from "@/app/actions/auth";
 import MobileMenu from "@/components/ui/mobile-menu";
+import NavLinks from "@/components/ui/nav-links";
 import Logo from "@/components/ui/logo";
 
 export default async function AppLayout({
@@ -12,14 +13,6 @@ export default async function AppLayout({
 }) {
   const profile = await requireStaff();
   const isAdmin = profile.role === "admin";
-
-  const navLinks = [
-    { href: "/board", label: "Board", icon: <LayoutGrid className="h-4 w-4" /> },
-    { href: "/jobs", label: "Jobs", icon: <Briefcase className="h-4 w-4" /> },
-    ...(isAdmin
-      ? [{ href: "/admin", label: "Admin", icon: <Shield className="h-4 w-4" /> }]
-      : []),
-  ];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -32,16 +25,7 @@ export default async function AppLayout({
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-1 text-sm md:flex">
-            {navLinks.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-muted hover:bg-background hover:text-foreground"
-              >
-                {l.icon}
-                {l.label}
-              </Link>
-            ))}
+            <NavLinks isAdmin={isAdmin} variant="desktop" />
           </nav>
 
           {/* Desktop user + sign out */}
@@ -55,7 +39,7 @@ export default async function AppLayout({
               </div>
             </div>
             <form action={signOut}>
-              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted hover:bg-background hover:text-foreground">
+              <button className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-muted transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
                 <LogOut className="h-4 w-4" />
                 Sign out
               </button>
@@ -65,16 +49,7 @@ export default async function AppLayout({
           {/* Mobile menu */}
           <div className="ml-auto md:hidden">
             <MobileMenu>
-              {navLinks.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground"
-                >
-                  {l.icon}
-                  {l.label}
-                </Link>
-              ))}
+              <NavLinks isAdmin={isAdmin} variant="mobile" />
               <div className="my-1 border-t border-border" />
               <div className="px-3 py-1">
                 <div className="text-sm font-medium leading-tight">
@@ -85,7 +60,7 @@ export default async function AppLayout({
                 </div>
               </div>
               <form action={signOut}>
-                <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted hover:bg-background hover:text-foreground">
+                <button className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted transition hover:bg-rose-50 hover:text-rose-600">
                   <LogOut className="h-4 w-4" />
                   Sign out
                 </button>
