@@ -28,11 +28,19 @@ export default function CreateJobForm({
   const formRef = useRef<HTMLFormElement>(null);
   const [questions, setQuestions] = useState<DraftQuestion[]>([]);
 
+  // Clear the drafted questions once per successful post. useActionState returns
+  // a fresh state object each time; comparing it to the last one we saw lets us
+  // react to the change during render (React's documented pattern) without an
+  // effect, so there are no cascading re-renders.
+  const [seenState, setSeenState] = useState<JobFormState>(undefined);
+  if (state !== seenState) {
+    setSeenState(state);
+    if (state && "ok" in state) setQuestions([]);
+  }
+
+  // Reset the native form fields on success (DOM side effect, not React state).
   useEffect(() => {
-    if (state && "ok" in state) {
-      formRef.current?.reset();
-      setQuestions([]);
-    }
+    if (state && "ok" in state) formRef.current?.reset();
   }, [state]);
 
   const isAdmin = !!customers;
