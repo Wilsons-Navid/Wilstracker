@@ -139,12 +139,12 @@ export default function AccountRow({
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-muted">
-                  Description
+                  About / Company
                 </label>
                 <input
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Customer context / notes"
+                  placeholder="Company description / customer context"
                   className={inputCls}
                 />
               </div>
@@ -259,15 +259,17 @@ export default function AccountRow({
       </td>
       <td className="py-2.5">
         <div className="flex items-center justify-end gap-3">
-          {isCandidate && (
-            <Link
-              href={`/admin/candidates/${account.id}`}
-              className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-foreground"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              View
-            </Link>
-          )}
+          <Link
+            href={
+              isCandidate
+                ? `/admin/candidates/${account.id}`
+                : `/admin/customers/${account.id}`
+            }
+            className="inline-flex items-center gap-1 text-sm text-muted transition hover:text-foreground"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            View
+          </Link>
           <button
             type="button"
             onClick={() => setEditing(true)}

@@ -54,15 +54,23 @@ export default function Board({
   jobs,
   cards: initial,
   owners,
+  initialCustomer,
 }: {
   jobs: Job[];
   cards: PipelineCard[];
   // Job owners (customers), admin-only. When present, the customer filter shows.
   owners?: { id: string; name: string }[];
+  // Optional customer id to pre-select the filter on load (e.g. deep-linked
+  // from the admin customer view). Ignored if it isn't a known owner.
+  initialCustomer?: string;
 }) {
   const [candidates, setCandidates] = useState<PipelineCard[]>(initial);
   const [jobFilter, setJobFilter] = useState<string>("all");
-  const [customerFilter, setCustomerFilter] = useState<string>("all");
+  const [customerFilter, setCustomerFilter] = useState<string>(() =>
+    initialCustomer && owners?.some((o) => o.id === initialCustomer)
+      ? initialCustomer
+      : "all",
+  );
   const [nameFilter, setNameFilter] = useState<string>("");
   const [activeId, setActiveId] = useState<string | null>(null);
   // The card that just changed stage, with a bumping nonce so repeated moves of

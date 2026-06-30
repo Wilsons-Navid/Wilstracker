@@ -9,8 +9,13 @@ import type { Job, PipelineCard } from "@/lib/types";
 // payload bounded and we surface the total so nothing looks silently missing.
 const BOARD_LIMIT = 500;
 
-export default async function BoardPage() {
+export default async function BoardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ customer?: string }>;
+}) {
   const profile = await getProfile();
+  const { customer: customerParam } = await searchParams;
   const supabase = await createClient();
 
   // RLS scopes these automatically: customers see their own rows; admins see all.
@@ -113,7 +118,12 @@ export default async function BoardPage() {
         </div>
       )}
 
-      <Board jobs={(jobs as Job[]) ?? []} cards={cards} owners={owners} />
+      <Board
+        jobs={(jobs as Job[]) ?? []}
+        cards={cards}
+        owners={owners}
+        initialCustomer={customerParam}
+      />
     </div>
   );
 }
