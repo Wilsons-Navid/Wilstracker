@@ -85,7 +85,7 @@ export default function CreateAccountForm() {
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="description" className="text-sm font-medium">
-          Description <span className="font-normal text-muted">(optional)</span>
+          About / Company <span className="font-normal text-muted">(optional)</span>
         </label>
         <textarea
           id="description"
