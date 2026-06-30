@@ -24,11 +24,6 @@ Live: [wilstracker.vercel.app](https://wilstracker.vercel.app)
   <img src="docs/board.png" alt="WilsTracker recruiter pipeline board" width="900" />
 </p>
 
-It was built as a one-week coding test, with the goal of getting a first
-customer live quickly on a clean, well-documented codebase, then extended with a
-full candidate experience, richer recruiter tools, and a layout that works just
-as well on a phone.
-
 ## Table of contents
 
 1. [What we're building](#what-were-building)
@@ -66,7 +61,7 @@ apply to roles and follow their own applications.
 
 Where the project started:
 
-- Admins provision every recruiter and admin login. There is no public sign-up for them.
+- Admins create every recruiter and admin login. There is no public sign-up for them.
 - Recruiters sign in to their own workspace.
 - They post the roles they are hiring for.
 - They add candidates by hand and capture the essentials, such as a name, an email, and a LinkedIn link.
