@@ -53,12 +53,16 @@ const STAGE_STYLE: Record<
 export default function Board({
   jobs,
   cards: initial,
+  owners,
 }: {
   jobs: Job[];
   cards: PipelineCard[];
+  // Job owners (customers), admin-only. When present, the customer filter shows.
+  owners?: { id: string; name: string }[];
 }) {
   const [candidates, setCandidates] = useState<PipelineCard[]>(initial);
   const [jobFilter, setJobFilter] = useState<string>("all");
+  const [customerFilter, setCustomerFilter] = useState<string>("all");
   const [nameFilter, setNameFilter] = useState<string>("");
   const [activeId, setActiveId] = useState<string | null>(null);
   // The card that just changed stage, with a bumping nonce so repeated moves of
@@ -114,14 +118,34 @@ export default function Board({
     [jobs],
   );
 
+  // job_id -> owner_id, so a card can be matched to its customer.
+  const ownerByJob = useMemo(
+    () => Object.fromEntries(jobs.map((j) => [j.id, j.owner_id])),
+    [jobs],
+  );
+
+  // When a customer is selected, only their jobs stay in the job dropdown.
+  const visibleJobs = useMemo(
+    () =>
+      customerFilter === "all"
+        ? jobs
+        : jobs.filter((j) => j.owner_id === customerFilter),
+    [jobs, customerFilter],
+  );
+
   const filtered = useMemo(() => {
     const q = nameFilter.trim().toLowerCase();
     return candidates.filter((c) => {
       if (jobFilter !== "all" && c.job_id !== jobFilter) return false;
+      if (
+        customerFilter !== "all" &&
+        (!c.job_id || ownerByJob[c.job_id] !== customerFilter)
+      )
+        return false;
       if (q && !c.full_name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [candidates, jobFilter, nameFilter]);
+  }, [candidates, jobFilter, customerFilter, ownerByJob, nameFilter]);
 
   const byStage = useMemo(() => {
     const map: Record<CandidateStage, PipelineCard[]> = {
@@ -171,13 +195,32 @@ export default function Board({
     <div ref={boardRef} className="flex h-full flex-col gap-4">
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-3">
+        {owners && owners.length > 0 && (
+          <select
+            value={customerFilter}
+            onChange={(e) => {
+              setCustomerFilter(e.target.value);
+              // Drop the job filter if it no longer belongs to this customer.
+              setJobFilter("all");
+            }}
+            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent sm:w-auto"
+          >
+            <option value="all">All customers</option>
+            {owners.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
+              </option>
+            ))}
+          </select>
+        )}
+
         <select
           value={jobFilter}
           onChange={(e) => setJobFilter(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-accent sm:w-auto"
         >
           <option value="all">All jobs</option>
-          {jobs.map((j) => (
+          {visibleJobs.map((j) => (
             <option key={j.id} value={j.id}>
               {j.title}
             </option>

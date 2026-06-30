@@ -65,6 +65,25 @@ export default async function BoardPage() {
     };
   });
 
+  // For admins, build the list of customers (job owners) so the board can be
+  // filtered by customer. Customers themselves only ever see their own rows, so
+  // the filter would be pointless clutter — it stays admin-only.
+  let owners: { id: string; name: string }[] | undefined;
+  if (profile?.role === "admin") {
+    const ownerIds = [...new Set(((jobs as Job[]) ?? []).map((j) => j.owner_id))];
+    if (ownerIds.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", ownerIds);
+      owners = ((profs as { id: string; full_name: string | null }[]) ?? [])
+        .map((p) => ({ id: p.id, name: p.full_name ?? "Unnamed customer" }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      owners = [];
+    }
+  }
+
   const total = count ?? 0;
   const shown = cards.length;
 
@@ -94,7 +113,7 @@ export default async function BoardPage() {
         </div>
       )}
 
-      <Board jobs={(jobs as Job[]) ?? []} cards={cards} />
+      <Board jobs={(jobs as Job[]) ?? []} cards={cards} owners={owners} />
     </div>
   );
 }
