@@ -12,11 +12,13 @@
   <a href="https://github.com/Wilsons-Navid/Wilstracker/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Wilsons-Navid/Wilstracker/ci.yml?branch=master&style=for-the-badge&logo=githubactions&logoColor=white&label=CI" alt="CI" /></a>
 </p>
 
-WilsTracker is a lightweight applicant tracking system (ATS). Admins create
-accounts, customers post jobs and manage their hiring pipeline on a drag-and-drop
-Kanban board, and candidates apply through a public careers site and track their
-applications in their own portal. An AI-assisted CV assessment scores each
-applicant against the job they applied for.
+WilsTracker is a lightweight applicant tracking system that keeps the whole
+hiring process in one place. Admins create the accounts, since there is no public
+sign-up for recruiters or other admins. Customers post their roles and move
+candidates across a drag-and-drop Kanban board from applied to hired, while an AI
+assessment scores each applicant against the exact job they applied for.
+Candidates apply through a public careers site and follow where every one of
+their applications stands from a portal of their own.
 
 Live: [wilstracker.vercel.app](https://wilstracker.vercel.app)
 
